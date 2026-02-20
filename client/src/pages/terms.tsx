@@ -161,7 +161,7 @@ export default function TermsOfService() {
                   <li>Confirmez votre demande de résiliation</li>
                 </ul>
                 <p className="text-muted-foreground leading-relaxed">
-                  Ou contactez-nous directement à : <a href="mailto:contact@livetech.africa" className="text-green-500 hover:underline">contact@livetech.africa</a>
+                  Ou contactez-nous directement à : <a href="mailto:contact@livepay.tech" className="text-green-500 hover:underline">contact@livepay.tech</a>
                 </p>
 
                 <h3 className="text-lg font-semibold pt-4">5.3. Résiliation par LIVE TECH</h3>
@@ -289,7 +289,7 @@ export default function TermsOfService() {
                   LIVE TECH propose un support technique inclus dans tous les abonnements :
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                  <li><strong>Support email :</strong> réponse sous 24h ouvrées (contact@livetech.africa)</li>
+                  <li><strong>Support email :</strong> réponse sous 24h ouvrées (contact@livepay.tech)</li>
                   <li><strong>Support téléphonique :</strong> aux heures de bureau (lun-ven, 9h-18h GMT)</li>
                   <li><strong>Centre d'aide :</strong> documentation, tutoriels, FAQ en ligne</li>
                   <li><strong>Webinaires :</strong> sessions de formation régulières (plans Business et Enterprise)</li>
@@ -400,8 +400,8 @@ export default function TermsOfService() {
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-green-500" />
-                      <a href="mailto:contact@livetech.africa" className="text-green-500 hover:underline font-medium">
-                        contact@livetech.africa
+                      <a href="mailto:contact@livepay.tech" className="text-green-500 hover:underline font-medium">
+                        contact@livepay.tech
                       </a>
                     </div>
                     <div className="flex items-center gap-2">

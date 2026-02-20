@@ -44,7 +44,7 @@ export default function PrivacyPolicy() {
                   <Mail className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <p className="font-semibold">Email</p>
-                    <p className="text-sm text-muted-foreground">contact@livetech.africa</p>
+                    <p className="text-sm text-muted-foreground">contact@livepay.tech</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -209,7 +209,7 @@ export default function PrivacyPolicy() {
                 <li><strong>Droit de retirer votre consentement :</strong> à tout moment pour les traitements basés sur le consentement</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed">
-                Pour exercer ces droits, contactez-nous à : <a href="mailto:contact@livetech.africa" className="text-green-500 hover:underline">contact@livetech.africa</a>
+                Pour exercer ces droits, contactez-nous à : <a href="mailto:contact@livepay.tech" className="text-green-500 hover:underline">contact@livepay.tech</a>
               </p>
             </section>
 
@@ -247,7 +247,7 @@ export default function PrivacyPolicy() {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-green-500" />
-                      <a href="mailto:contact@livetech.africa" className="text-green-500 hover:underline font-medium">contact@livetech.africa</a>
+                      <a href="mailto:contact@livepay.tech" className="text-green-500 hover:underline font-medium">contact@livepay.tech</a>
                     </div>
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-green-500" />

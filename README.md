@@ -287,7 +287,7 @@ We welcome contributions! Please see [.github/CONTRIBUTING.md](.github/CONTRIBUT
 
 ## 📞 Support
 
-- 📧 Email: contact@livetech.africa
+- 📧 Email: contact@livepay.tech
 - 🐛 Issues: [GitHub Issues](https://github.com/modousall/livetech/issues)
 
 ---
@@ -303,7 +303,7 @@ We welcome contributions! Please see [.github/CONTRIBUTING.md](.github/CONTRIBUT
 Built for African businesses & public services. Powering customer relationships via WhatsApp across francophone Africa.
 
 **Website:** https://livetech.africa
-**Contact:** contact@livetech.africa
+**Contact:** contact@livepay.tech
 
 ---
 

@@ -134,7 +134,7 @@ export default function Landing() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </a>
-                <a href="mailto:contact@livetech.africa?subject=Demande%20de%20d%C3%A9mo%20LIVE%20TECH">
+                <a href="mailto:contact@livepay.tech?subject=Demande%20de%20d%C3%A9mo%20LIVE%20TECH">
                   <Button size="lg" variant="outline">
                     Contacter pour démo
                   </Button>
@@ -305,7 +305,7 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#pricing" className="hover:text-foreground">Tarifs</a></li>
                 <li><a href="/login" className="hover:text-foreground">Connexion</a></li>
-                <li><a href="mailto:contact@livetech.africa" className="hover:text-foreground">Demander une démo</a></li>
+                <li><a href="mailto:contact@livepay.tech" className="hover:text-foreground">Demander une démo</a></li>
               </ul>
             </div>
 
@@ -325,7 +325,7 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <Mail className="w-3 h-3" />
-                  <a href="mailto:contact@livetech.africa" className="hover:text-foreground">contact@livetech.africa</a>
+                  <a href="mailto:contact@livepay.tech" className="hover:text-foreground">contact@livepay.tech</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="w-3 h-3" />
@@ -348,7 +348,7 @@ export default function Landing() {
               <span>•</span>
               <a href="/terms" className="hover:text-foreground transition-colors">CGU</a>
               <span>•</span>
-              <a href="mailto:contact@livetech.africa" className="hover:text-foreground transition-colors">Support</a>
+              <a href="mailto:contact@livepay.tech" className="hover:text-foreground transition-colors">Support</a>
             </div>
           </div>
         </div>
