@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme-toggle";
+import Logo from "/logo.jpg";
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -44,9 +45,7 @@ export default function Login() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 px-4 py-3">
           <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-green-500 flex items-center justify-center">
-              <Mail className="w-4 h-4 text-white" />
-            </div>
+            <img src={Logo} alt="LIVE TECH Logo" className="w-10 h-10 rounded-md object-cover" />
             <span className="text-lg font-semibold tracking-tight">LIVE TECH</span>
           </a>
           <ThemeToggle />

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound, MessageCircle } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -19,6 +19,7 @@ import { getVendorConfig, isSuperAdmin, type VendorConfig } from "@/lib/firebase
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { BUSINESS_PROFILES, type BusinessProfileKey, type PersonaModuleId } from "@/lib/business-profiles";
+import Logo from "/logo.jpg";
 
 const baseNavItems = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
@@ -85,10 +86,8 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-green-600 flex items-center justify-center shrink-0">
-            <MessageCircle className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight">LivePay</span>
+          <img src={Logo} alt="LIVE TECH Logo" className="w-8 h-8 rounded-md object-cover shrink-0" />
+          <span className="text-lg font-semibold tracking-tight">LIVE TECH</span>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
           {isSuperAdminUser ? "Super Admin" : `Profil: ${profile.label} • ${isExpertMode ? "expert" : "simplifie"}`}
