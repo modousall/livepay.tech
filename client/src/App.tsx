@@ -79,9 +79,10 @@ function AuthenticatedRouter() {
                   <Route path="/settings" component={Settings} />
                   <Route path="/admin" component={Admin} />
                   <Route path="/super-admin" component={SuperAdmin} />
+                  {/* Catch-all for authenticated users - redirect to dashboard instead of 404 */}
+                  <Route path="/:path*" component={Dashboard} />
                 </>
               )}
-              <Route component={NotFound} />
             </Switch>
           </main>
           {!isSuperAdminUser && <AppFooter />}

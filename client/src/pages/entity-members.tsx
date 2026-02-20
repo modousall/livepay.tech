@@ -34,14 +34,19 @@ export default function EntityMembersPage() {
     setLoading(true);
     try {
       const data = await getEntityMembers(entityId);
-      setMembers(data);
+      setMembers(data || []);
     } catch (error) {
       console.error("Error loading entity members:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les membres de l'entite.",
-        variant: "destructive",
-      });
+      // Ne pas afficher d'erreur si aucun membre - c'est normal pour une nouvelle entite
+      if ((error as any).message?.includes("not found")) {
+        setMembers([]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les membres de l'entite.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -171,7 +176,13 @@ export default function EntityMembersPage() {
           {loading ? (
             <p className="text-sm text-muted-foreground">Chargement...</p>
           ) : members.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun membre trouve.</p>
+            <div className="text-center py-8">
+              <UsersRound className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground mb-2">Aucun membre dans cette entite.</p>
+              <p className="text-xs text-muted-foreground">
+                Partagez l'ID d'entite avec vos collaborateurs pour les rattacher.
+              </p>
+            </div>
           ) : (
             <Table>
               <TableHeader>
