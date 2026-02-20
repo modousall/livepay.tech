@@ -29,7 +29,9 @@ export function useAuth() {
     const unsubscribe = subscribeToAuth((profile) => {
       clearTimeout(timeout);
       const resolvedProfile = profile
-        ? { ...profile, entityId: profile.entityId || profile.id }
+        ? (profile.role === "superadmin"
+          ? profile
+          : { ...profile, entityId: profile.entityId || profile.id })
         : profile;
       setUser(resolvedProfile);
       setIsLoading(false);
@@ -47,7 +49,9 @@ export function useAuth() {
       return loginWithEmail(credentials.email, credentials.password);
     },
     onSuccess: (profile) => {
-      const resolvedProfile = { ...profile, entityId: profile.entityId || profile.id };
+      const resolvedProfile = profile.role === "superadmin"
+        ? profile
+        : { ...profile, entityId: profile.entityId || profile.id };
       setUser(resolvedProfile);
       queryClient.setQueryData(["/api/auth/user"], resolvedProfile);
     },
@@ -68,7 +72,9 @@ export function useAuth() {
       return registerWithEmail(email, password, profileData);
     },
     onSuccess: (profile) => {
-      const resolvedProfile = { ...profile, entityId: profile.entityId || profile.id };
+      const resolvedProfile = profile.role === "superadmin"
+        ? profile
+        : { ...profile, entityId: profile.entityId || profile.id };
       setUser(resolvedProfile);
       queryClient.setQueryData(["/api/auth/user"], resolvedProfile);
     },

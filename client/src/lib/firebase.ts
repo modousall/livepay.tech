@@ -110,24 +110,22 @@ export async function loginWithEmail(email: string, password: string): Promise<U
       createdAt: Timestamp.fromDate(profile.createdAt),
       updatedAt: Timestamp.fromDate(profile.updatedAt),
     });
-  } else if (isSuperAdmin(email) && profile.role !== "superadmin") {
-    // Update role if user is a super admin but profile doesn't reflect it
-    profile.role = "superadmin";
-    // Remove entity association for super admin
-    profile.entityId = undefined;
-    profile.entityRole = undefined;
-    await updateDoc(doc(db, "users", user.uid), {
-      role: "superadmin",
-      entityId: null,
-      entityRole: null,
-    });
-  } else if (isSuperAdmin(email) && (profile.entityId || profile.entityRole)) {
-    // Fix: Remove entity association from existing super admin profiles
-    console.log("Removing entity association from super admin profile...");
-    await updateDoc(doc(db, "users", user.uid), {
-      entityId: null,
-      entityRole: null,
-    });
+  } else if (isSuperAdmin(email)) {
+    const needsRoleFix = profile.role !== "superadmin";
+    const needsCleanup = !!(profile.entityId || profile.entityRole || profile.phone);
+    if (needsRoleFix || needsCleanup) {
+      // Ensure super admin has no entity, role, or phone attached
+      profile.role = "superadmin";
+      profile.entityId = undefined;
+      profile.entityRole = undefined;
+      profile.phone = undefined;
+      await updateDoc(doc(db, "users", user.uid), {
+        role: "superadmin",
+        entityId: null,
+        entityRole: null,
+        phone: null,
+      });
+    }
   }
 
   return {
@@ -321,14 +319,16 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void): (
             updatedAt: Timestamp.fromDate(profile.updatedAt),
           });
         } else if (isSuperAdmin(firebaseUser.email || "")) {
-          // Fix existing super admin profile - remove entity association
-          if (profile.entityId || profile.entityRole) {
-            console.log("Fixing super admin profile - removing entity association...");
+          const needsCleanup = !!(profile.entityId || profile.entityRole || profile.phone);
+          if (needsCleanup) {
+            console.log("Fixing super admin profile - removing entity association and phone...");
             profile.entityId = undefined;
             profile.entityRole = undefined;
+            profile.phone = undefined;
             await updateDoc(doc(db, "users", firebaseUser.uid), {
               entityId: null,
               entityRole: null,
+              phone: null,
             });
           }
         }
@@ -1878,6 +1878,5 @@ export async function purgePlatformKeepSuperAdmin(): Promise<{
     deletedByCollection: payload.deletedByCollection || {},
   };
 }
-
 
 

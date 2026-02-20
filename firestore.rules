@@ -42,7 +42,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdminOrSuperAdmin();
       allow list: if isSuperAdmin();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if (isAuthenticated() && request.auth.uid == userId) || isSuperAdmin();
       allow update: if isOwner(userId) || isAdminOrSuperAdmin();
       allow delete: if isAdminOrSuperAdmin();
     }

@@ -6,7 +6,9 @@
 import { 
   collection, 
   addDoc, 
+  doc,
   serverTimestamp,
+  setDoc,
   Timestamp 
 } from "firebase/firestore";
 import { 
@@ -89,7 +91,7 @@ export async function createEntityWithAdmin(
       updatedAt: new Date(),
     };
 
-    await addDoc(collection(db, "users"), {
+    await setDoc(doc(db, "users", adminId), {
       ...adminProfile,
       createdAt: Timestamp.fromDate(adminProfile.createdAt!),
       updatedAt: Timestamp.fromDate(adminProfile.updatedAt!),
