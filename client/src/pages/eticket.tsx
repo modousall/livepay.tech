@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRoute } from "wouter";
+import { Download, Printer, Ticket, Store, Phone } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Printer, Ticket, Store, Phone } from "lucide-react";
 import { getOrderByReceiptToken, getProduct, getUserProfile, type Order, type Product, type UserProfile } from "@/lib/firebase";
 
 function formatAmount(amount: number): string {

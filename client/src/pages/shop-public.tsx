@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
+import { MessageCircle, Store, ShoppingBag } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle, Store, ShoppingBag } from "lucide-react";
 import {
   getPublicProductsByVendor,
   getUserProfile,

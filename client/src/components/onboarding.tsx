@@ -1,7 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle, 
   Circle, 
@@ -14,6 +11,10 @@ import {
   Phone
 } from "lucide-react";
 import { Link } from "wouter";
+
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface OnboardingStep {
   id: string;

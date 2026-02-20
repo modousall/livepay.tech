@@ -1,3 +1,7 @@
+import { Link, useLocation } from "wouter";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, MessageCircle, Shield, Crown, Layers, Headset } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -10,13 +14,10 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, MessageCircle, Shield, Crown, Layers, Headset } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getVendorConfig, isSuperAdmin, type VendorConfig } from "@/lib/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
 import { BUSINESS_PROFILES, type BusinessProfileKey, type PersonaModuleId } from "@/lib/business-profiles";
 
 const baseNavItems = [

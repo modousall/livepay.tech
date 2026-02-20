@@ -1,10 +1,11 @@
 // Admin functionality temporarily disabled during Firebase migration
 // This page will be re-implemented with Firebase Admin SDK
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Shield, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
+
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function AdminUpcoming() {
   const [, setLocation] = useLocation();

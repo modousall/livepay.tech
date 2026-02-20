@@ -1,5 +1,6 @@
-import type { Express } from "express";
 import { type Server } from "http";
+
+import type { Express } from "express";
 
 /**
  * Minimal routes for development server

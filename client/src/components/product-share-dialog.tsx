@@ -1,5 +1,15 @@
 import { useState, useMemo } from "react";
 import {
+  Share2,
+  Copy,
+  Check,
+  MessageCircle,
+  Link2,
+  ImageIcon,
+  Loader2,
+} from "lucide-react";
+
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -10,15 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Share2,
-  Copy,
-  Check,
-  MessageCircle,
-  Link2,
-  ImageIcon,
-  Loader2,
-} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type Product } from "@/lib/firebase";
 

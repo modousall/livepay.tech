@@ -6,6 +6,7 @@
 import { useMemo } from "react";
 import { startOfDay, subDays, format, isWithinInterval, startOfWeek, eachDayOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
+
 import type { Order, Product } from "@/lib/firebase";
 
 export interface DailyRevenue {

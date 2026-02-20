@@ -4,6 +4,34 @@
  */
 
 import { useState, useEffect } from "react";
+import {
+  Users,
+  Package,
+  ShoppingCart,
+  CircleDollarSign,
+  TrendingUp,
+  Search,
+  Store,
+  Activity,
+  Globe,
+  Shield,
+  Settings,
+  MessageCircle,
+  CreditCard,
+  Bell,
+  Save,
+  Trash2,
+  UserCog,
+  Ban,
+  CheckCircle,
+  RefreshCw,
+  Smartphone,
+  Wallet,
+  Key,
+} from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,33 +65,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Users,
-  Package,
-  ShoppingCart,
-  CircleDollarSign,
-  TrendingUp,
-  Search,
-  Store,
-  Activity,
-  Globe,
-  Shield,
-  Settings,
-  MessageCircle,
-  CreditCard,
-  Bell,
-  Save,
-  Trash2,
-  UserCog,
-  Ban,
-  CheckCircle,
-  RefreshCw,
-  Smartphone,
-  Wallet,
-  Key,
-} from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {

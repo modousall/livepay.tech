@@ -3,8 +3,6 @@
  * Displays revenue charts and conversion metrics
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   BarChart,
   Bar,
@@ -15,6 +13,9 @@ import {
   Cell,
 } from "recharts";
 import { TrendingUp, TrendingDown, Target, Zap, Trophy, ArrowUpRight, ArrowDownRight } from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { AnalyticsData, TopProduct } from "@/hooks/use-analytics";
 
 interface AnalyticsChartsProps {

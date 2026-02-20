@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Plus, Package, Trash2, Pencil, Share2, Star, ImageIcon, Tag, Percent, Upload, X, Loader2, Store } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Package, Trash2, Pencil, Share2, Star, ImageIcon, Tag, Percent, Upload, X, Loader2, Store } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { ProductShareDialog } from "@/components/product-share-dialog";

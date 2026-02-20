@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
   MessageCircle,
   Shield,
@@ -14,6 +11,10 @@ import {
   BarChart3,
   Truck,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const FEATURES = [
   {

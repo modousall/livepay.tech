@@ -1,12 +1,14 @@
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getVendorConfig, type VendorConfig } from "@/lib/firebase";
 import { BUSINESS_PROFILES, PERSONA_MODULES, type BusinessProfileKey } from "@/lib/business-profiles";
-import { Link } from "wouter";
+
 
 const INNOVATION_PACKS = [
   {

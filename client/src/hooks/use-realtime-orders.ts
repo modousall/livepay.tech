@@ -4,8 +4,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+
 import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
+
 import { subscribeToOrders, type Order } from "@/lib/firebase";
 
 interface UseRealtimeOrdersOptions {

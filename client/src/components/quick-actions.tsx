@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Package, ShoppingCart, Settings, X, Zap } from "lucide-react";
 import { Link } from "wouter";
+
+import { Button } from "@/components/ui/button";
 
 interface QuickAction {
   id: string;

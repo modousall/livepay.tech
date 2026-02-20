@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { Radio, Mail, Lock, User, Building, Phone, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Radio, Mail, Lock, User, Building, Phone, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { BUSINESS_PROFILE_ORDER, BUSINESS_PROFILES, type BusinessProfileKey } from "@/lib/business-profiles";
 
 export default function Register() {

@@ -1,10 +1,11 @@
 import { useParams } from "wouter";
+import { MessageCircle, ShoppingBag, Share2, Copy, Check, Send, Camera, Video, Facebook, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageCircle, ShoppingBag, Share2, Copy, Check, Send, Camera, Video, Facebook, Download } from "lucide-react";
-import { useState, useEffect } from "react";
 import { getProductByShareCode, getUserProfile, getVendorConfig, type Product, type UserProfile, type VendorConfig } from "@/lib/firebase";
 
 interface PublicProductData {

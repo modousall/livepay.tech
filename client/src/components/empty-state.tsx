@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { 
   Package, 
   ShoppingCart, 
@@ -10,6 +8,9 @@ import {
   Sparkles
 } from "lucide-react";
 import { Link } from "wouter";
+
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface EmptyStateProps {
   type: "products" | "orders" | "general";
