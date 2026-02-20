@@ -62,6 +62,8 @@ function AuthenticatedRouter() {
                 <>
                   <Route path="/" component={SuperAdmin} />
                   <Route path="/super-admin" component={SuperAdmin} />
+                  {/* Catch-all for superadmin - redirect to super admin */}
+                  <Route path="/:path*" component={SuperAdmin} />
                 </>
               ) : (
                 <>
@@ -78,7 +80,6 @@ function AuthenticatedRouter() {
                   <Route path="/entity-members" component={EntityMembersPage} />
                   <Route path="/settings" component={Settings} />
                   <Route path="/admin" component={Admin} />
-                  <Route path="/super-admin" component={SuperAdmin} />
                   {/* Catch-all for authenticated users - redirect to dashboard instead of 404 */}
                   <Route path="/:path*" component={Dashboard} />
                 </>
