@@ -3,20 +3,8 @@
  * This function is called by Super Admin only
  */
 
-import { 
-  collection, 
-  addDoc, 
-  doc,
-  serverTimestamp,
-  setDoc,
-  Timestamp 
-} from "firebase/firestore";
-import { 
-  createUserWithEmailAndPassword,
-  updateProfile
-} from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import type { UserProfile } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 
 interface CreateEntityData {
   businessName: string;
@@ -43,90 +31,18 @@ interface CreateEntityResult {
 export async function createEntityWithAdmin(
   data: CreateEntityData
 ): Promise<CreateEntityResult> {
-  const {
-    businessName,
-    adminEmail,
-    adminPassword,
-    adminFirstName = "Admin",
-    adminLastName = "",
-    phone = "",
-    sector = "shop"
-  } = data;
-
   try {
-    // 1. Create admin user in Firebase Auth
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      adminEmail.toLowerCase(),
-      adminPassword
-    );
-    const adminId = userCredential.user.uid;
-
-    // Update display name
-    const displayName = `${adminFirstName} ${adminLastName}`.trim() || businessName;
-    await updateProfile(userCredential.user, { displayName });
-
-    // 2. Create entity (tenant) in Firestore
-    const entityRef = await addDoc(collection(db, "entities"), {
-      name: businessName,
-      ownerId: adminId,
-      status: "active",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+    const createEntity = httpsCallable(functions, "createEntityWithAdmin");
+    const result = await createEntity({
+      businessName: data.businessName,
+      adminEmail: data.adminEmail,
+      adminPassword: data.adminPassword,
+      adminFirstName: data.adminFirstName,
+      adminLastName: data.adminLastName,
+      phone: data.phone,
+      sector: data.sector,
     });
-    const entityId = entityRef.id;
-
-    // 3. Create admin user profile in Firestore
-    const adminProfile: Partial<UserProfile> = {
-      id: adminId,
-      email: adminEmail.toLowerCase(),
-      firstName: adminFirstName,
-      lastName: adminLastName,
-      businessName: businessName,
-      phone: phone,
-      role: "vendor",
-      entityId: entityId,
-      entityRole: "owner",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await setDoc(doc(db, "users", adminId), {
-      ...adminProfile,
-      createdAt: Timestamp.fromDate(adminProfile.createdAt!),
-      updatedAt: Timestamp.fromDate(adminProfile.updatedAt!),
-    });
-
-    // 4. Create vendor config for the entity
-    await addDoc(collection(db, "vendorConfigs"), {
-      vendorId: entityId,
-      businessName: businessName,
-      preferredPaymentMethod: "wave",
-      status: "active",
-      liveMode: false,
-      uiMode: "expert",
-      expertModeEnabled: true,
-      reservationDurationMinutes: 10,
-      autoReplyEnabled: true,
-      segment: sector,
-      allowQuantitySelection: true,
-      requireDeliveryAddress: false,
-      autoReminderEnabled: true,
-      upsellEnabled: false,
-      minTrustScoreRequired: 0,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-
-    // 5. Sign out the newly created user (Super Admin stays logged in)
-    await auth.signOut();
-
-    return {
-      entityId,
-      adminId,
-      adminEmail: adminEmail.toLowerCase(),
-      temporaryPassword: adminPassword,
-    };
+    return result.data as CreateEntityResult;
   } catch (error: any) {
     console.error("Error creating entity:", error);
     throw new Error(

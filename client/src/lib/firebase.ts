@@ -27,6 +27,7 @@ import {
   limit,
   serverTimestamp
 } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Firebase configuration
@@ -44,6 +45,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const functions = getFunctions(app);
 export const storage = getStorage(app);
 
 // User types
@@ -1878,5 +1880,4 @@ export async function purgePlatformKeepSuperAdmin(): Promise<{
     deletedByCollection: payload.deletedByCollection || {},
   };
 }
-
 
