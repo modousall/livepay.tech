@@ -10,10 +10,13 @@ import {
   UsersRound,
   BarChart3,
   Truck,
+  DollarSign,
+  Zap,
+  Building2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const FEATURES = [
@@ -55,6 +58,68 @@ const FEATURES = [
   },
 ];
 
+const PRICING_PLANS = [
+  {
+    name: "Starter",
+    price: "7 500",
+    period: "FCFA/mois",
+    description: "Pour les petites boutiques et entrepreneurs",
+    features: [
+      "1 000 conversations incluses",
+      "6 FCFA par conversation supplémentaire",
+      "Chatbot WhatsApp basique",
+      "Paiements Mobile Money",
+      "E-tickets illimités",
+      "Support email",
+    ],
+    cta: "Contacter pour accès",
+    popular: false,
+  },
+  {
+    name: "Growth",
+    price: "25 000",
+    period: "FCFA/mois",
+    description: "Pour les entreprises en croissance",
+    features: [
+      "5 000 conversations incluses",
+      "5 FCFA par conversation supplémentaire",
+      "Chatbot intelligent (IA)",
+      "Tous les moyens de paiement",
+      "Agenda & File d'attente",
+      "Tableau de bord avancé",
+      "Support prioritaire",
+    ],
+    cta: "Contacter pour accès",
+    popular: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Sur mesure",
+    period: "",
+    description: "Pour les grandes organisations",
+    features: [
+      "Conversations illimitées",
+      "Chatbot personnalisé",
+      "Intégrations API dédiées",
+      "Multi-entités",
+      "SLA garanti",
+      "Account manager dédié",
+      "Formation équipe",
+    ],
+    cta: "Nous contacter",
+    popular: false,
+  },
+];
+
+const SECTORS = [
+  { icon: Building2, name: "E-commerce", desc: "Vente en ligne" },
+  { icon: Ticket, name: "Événementiel", desc: "Billetterie" },
+  { icon: CalendarClock, name: "Services", desc: "Rendez-vous" },
+  { icon: UsersRound, name: "Admin", desc: "File d'attente" },
+  { icon: Truck, name: "Livraison", desc: "Suivi GPS" },
+  { icon: Zap, name: "Télécom", desc: "Conso & Recharges" },
+];
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -76,12 +141,13 @@ export default function Landing() {
       </header>
 
       <main className="flex-1">
+        {/* Hero Section */}
         <section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-1 text-sm text-green-600">
                 <Sparkles className="w-3 h-3" />
-                Platforme conversationnelle multi-metiers
+                Plateforme conversationnelle multi-metiers
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold tracking-tight leading-tight">
                 Un seul hub pour
@@ -93,18 +159,21 @@ export default function Landing() {
                 et file d'attente numerique unifies dans la meme plateforme.
               </p>
               <div className="flex flex-wrap gap-3">
-                <a href="/register">
-                  <Button size="lg" className="bg-green-500 hover:bg-green-600" data-testid="button-get-started">
-                    Activer ma plateforme
+                <a href="/login">
+                  <Button size="lg" className="bg-green-500 hover:bg-green-600" data-testid="button-request-access">
+                    Demander un accès
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </a>
-                <a href="/login">
-                  <Button size="lg" variant="outline" data-testid="button-login-hero">
-                    Se connecter
+                <a href="#pricing">
+                  <Button size="lg" variant="outline">
+                    Voir les tarifs
                   </Button>
                 </a>
               </div>
+              <p className="text-sm text-muted-foreground">
+                💡 Accès sur invitation uniquement. Contactez-nous pour activer votre entité.
+              </p>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Shield className="w-3 h-3 text-green-500" /> Exploitation securisee</span>
                 <span className="flex items-center gap-1"><CreditCard className="w-3 h-3 text-green-500" /> Paiement mobile money</span>
@@ -142,6 +211,24 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Sectors Section */}
+        <section className="max-w-6xl mx-auto px-4 pb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold">Secteurs supportés</h2>
+            <p className="text-muted-foreground mt-2">Une solution adaptee a chaque metier</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {SECTORS.map((sector) => (
+              <Card key={sector.name} className="p-4 text-center hover:shadow-md transition-shadow">
+                <sector.icon className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                <h3 className="font-semibold text-sm">{sector.name}</h3>
+                <p className="text-xs text-muted-foreground">{sector.desc}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Features Section */}
         <section className="max-w-6xl mx-auto px-4 pb-16 md:pb-24">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-serif font-bold">Modules plateformes</h2>
@@ -159,10 +246,82 @@ export default function Landing() {
             ))}
           </div>
         </section>
-      </main>\n</div>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="max-w-6xl mx-auto px-4 pb-16 md:pb-24">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-1 text-sm text-green-600 mb-4">
+              <DollarSign className="w-3 h-3" />
+              Tarification simple et transparente
+            </div>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold">Nos offres</h2>
+            <p className="text-muted-foreground mt-2">Choisissez le plan adapte a votre activite</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {PRICING_PLANS.map((plan) => (
+              <Card 
+                key={plan.name} 
+                className={`p-6 hover:shadow-lg transition-shadow ${
+                  plan.popular ? "border-green-500 border-2 shadow-lg" : ""
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-lg">
+                    Populaire
+                  </div>
+                )}
+                <CardHeader className="p-0 mb-4">
+                  <CardTitle className="text-xl">{plan.name}</CardTitle>
+                  <CardDescription className="text-sm">{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                  <div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold">{plan.price}</span>
+                      <span className="text-sm text-muted-foreground">{plan.period}</span>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 text-sm">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a href="/login">
+                    <Button 
+                      className="w-full" 
+                      variant={plan.popular ? "default" : "outline"}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </a>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-8 text-sm text-muted-foreground">
+            <p>💡 Tous les plans incluent :</p>
+            <div className="flex flex-wrap justify-center gap-4 mt-2">
+              <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> Sécurité maximale</span>
+              <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Mises à jour incluses</span>
+              <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> Support WhatsApp</span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground">
+          <p>&copy; 2026 LivePay. Tous droits réservés.</p>
+          <div className="flex justify-center gap-4 mt-4">
+            <a href="/privacy" className="hover:text-foreground">Confidentialité</a>
+            <a href="/terms" className="hover:text-foreground">Conditions</a>
+            <a href="mailto:support@livepay.tech" className="hover:text-foreground">Contact</a>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
-
-
-
-

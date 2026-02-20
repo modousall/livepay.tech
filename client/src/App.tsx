@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
-import Register from "@/pages/register";
+// Register removed - Registration is now Super Admin only
 import Dashboard from "@/pages/dashboard";
 // ModulesPage removed - Parcours menu removed
 import AppointmentsPage from "@/pages/appointments";
@@ -121,9 +121,7 @@ function AppRouter() {
         <Route path="/login">
           {user ? <AuthenticatedRouter /> : <Login />}
         </Route>
-        <Route path="/register">
-          {user ? <AuthenticatedRouter /> : <Register />}
-        </Route>
+        {/* Register removed - Registration is now Super Admin only */}
         <Route>
           {user ? <AuthenticatedRouter /> : <Landing />}
         </Route>
