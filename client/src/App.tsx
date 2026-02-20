@@ -2,7 +2,6 @@ import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { queryClient } from "./lib/queryClient";
-
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,7 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing-simple"; // Version simplifiée LIVE TECH
+import Landing from "@/pages/landing-simple";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Products from "@/pages/products";
@@ -20,12 +19,6 @@ import Orders from "@/pages/orders";
 import EntityMembersPage from "@/pages/entity-members";
 import Settings from "@/pages/settings";
 import SuperAdmin from "@/pages/super-admin";
-import ProductPublic from "@/pages/product-public";
-import PrivacyPolicy from "@/pages/privacy";
-import TermsOfService from "@/pages/terms";
-import DataDeletion from "@/pages/data-deletion";
-import { InstallPrompt } from "@/components/install-prompt";
-import { AppFooter } from "@/components/app-footer";
 import { isSuperAdmin } from "@/lib/firebase";
 
 function AuthenticatedRouter() {
@@ -66,7 +59,6 @@ function AuthenticatedRouter() {
               )}
             </Switch>
           </main>
-          {!isSuperAdminUser && <AppFooter />}
         </div>
       </div>
     </SidebarProvider>
@@ -91,10 +83,6 @@ function AppRouter() {
   return (
     <>
       <Switch>
-        <Route path="/p/:code" component={ProductPublic} />
-        <Route path="/privacy" component={PrivacyPolicy} />
-        <Route path="/terms" component={TermsOfService} />
-        <Route path="/data-deletion" component={DataDeletion} />
         <Route path="/login">
           {user ? <AuthenticatedRouter /> : <Login />}
         </Route>
@@ -102,8 +90,6 @@ function AppRouter() {
           {user ? <AuthenticatedRouter /> : <Landing />}
         </Route>
       </Switch>
-      {!user && <AppFooter />}
-      <InstallPrompt />
     </>
   );
 }

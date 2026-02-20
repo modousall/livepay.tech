@@ -281,17 +281,6 @@ export default function Landing() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>&copy; 2026 LIVE TECH. Tous droits réservés.</p>
-          <div className="flex justify-center gap-4 mt-4">
-            <a href="/privacy" className="hover:text-foreground">Confidentialité</a>
-            <a href="/terms" className="hover:text-foreground">Conditions</a>
-            <a href="mailto:contact@livetech.africa" className="hover:text-foreground">Contact</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
