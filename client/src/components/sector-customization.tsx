@@ -47,7 +47,7 @@ const SECTORS: SectorCard[] = [
       "Réclamations",
       "Tickets de caisse",
     ],
-    modules: ["crm_backoffice", "appointments", "queue_management", "products"],
+    modules: ["appointments", "queue_management", "products"],
   },
   {
     key: "insurance",
@@ -62,7 +62,7 @@ const SECTORS: SectorCard[] = [
       "Gestion des bénéficiaires",
       "Expertise en ligne",
     ],
-    modules: ["crm_backoffice", "interventions", "appointments", "products"],
+    modules: ["interventions", "appointments", "products"],
   },
   {
     key: "telecom",
@@ -77,7 +77,7 @@ const SECTORS: SectorCard[] = [
       "Signalement d'incidents",
       "Support technique",
     ],
-    modules: ["crm_backoffice", "interventions", "queue_management", "products", "orders"],
+    modules: ["interventions", "queue_management", "products", "orders"],
   },
   {
     key: "utilities",
@@ -92,7 +92,7 @@ const SECTORS: SectorCard[] = [
       "Interventions techniques",
       "Alertes de coupure",
     ],
-    modules: ["crm_backoffice", "interventions", "queue_management", "products"],
+    modules: ["interventions", "queue_management", "products"],
   },
   {
     key: "healthcare_private",
@@ -107,7 +107,7 @@ const SECTORS: SectorCard[] = [
       "Téléconsultation",
       "Rappels de vaccination",
     ],
-    modules: ["appointments", "crm_backoffice", "products"],
+    modules: ["appointments", "products"],
   },
   {
     key: "transport",
@@ -167,7 +167,7 @@ const SECTORS: SectorCard[] = [
       "Facturation",
       "Évaluation du service",
     ],
-    modules: ["interventions", "crm_backoffice"],
+    modules: ["interventions"],
   },
   {
     key: "events",
@@ -197,7 +197,7 @@ const SECTORS: SectorCard[] = [
       "Fidélisation clients",
       "Promotions",
     ],
-    modules: ["products", "orders", "crm_backoffice"],
+    modules: ["products", "orders"],
   },
 ];
 

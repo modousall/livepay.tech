@@ -38,8 +38,8 @@ export type PersonaModuleId =
   | "appointments"
   | "queue"
   | "ticketing"
-  | "interventions"
-  | "crm_backoffice";
+  | "interventions";
+  // crm_backoffice removed - CRM is integrated into WhatsApp interactions
 
 export interface PersonaModuleDefinition {
   id: PersonaModuleId;
@@ -85,12 +85,7 @@ export const PERSONA_MODULES: Record<PersonaModuleId, PersonaModuleDefinition> =
     path: "/modules/interventions",
     desc: "Suivi terrain et resolution",
   },
-  crm_backoffice: {
-    id: "crm_backoffice",
-    title: "Centre CRM",
-    path: "/modules/crm-backoffice",
-    desc: "SLA, assignations, escalades et historique",
-  },
+  // crm_backoffice removed - CRM is integrated into WhatsApp interactions
 };
 
 export const BUSINESS_PROFILE_ORDER: BusinessProfileKey[] = [
@@ -116,7 +111,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Commerce e-commerce",
     botHint: "Clients: envoyez le code produit (ex: ROBE1) pour commander.",
     highlights: ["Catalogue produit", "Paiement mobile", "Suivi livraison"],
-    essentialModules: ["products", "orders", "crm_backoffice"],
+    essentialModules: ["products", "orders"],
     controlTowerLabels: {
       openWorkLabel: "Ventes en cours",
       escalatedLabel: "Litiges / escalades",
@@ -129,7 +124,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Billetterie evenementielle",
     botHint: "Clients: envoyez le code ticket (ex: VIP1) pour reserver une place.",
     highlights: ["E-ticket", "Controle entree", "Places limitees"],
-    essentialModules: ["ticketing", "orders", "crm_backoffice"],
+    essentialModules: ["ticketing", "orders"],
     controlTowerLabels: {
       openWorkLabel: "Tickets a traiter",
       escalatedLabel: "Incidents evenement",
@@ -142,7 +137,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Prise de rendez-vous",
     botHint: "Clients: envoyez RDV + service (ex: RDV CARDIO) pour un creneau.",
     highlights: ["Calendrier creneaux", "Rappels auto", "Validation agent"],
-    essentialModules: ["appointments", "queue", "crm_backoffice"],
+    essentialModules: ["appointments", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Creneaux en attente",
       escalatedLabel: "Retards critiques",
@@ -155,7 +150,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "File d'attente numerique",
     botHint: "Clients: envoyez FILE + service pour prendre un numero de passage.",
     highlights: ["Tickets file", "Appel intelligent", "Estimation attente"],
-    essentialModules: ["queue", "crm_backoffice"],
+    essentialModules: ["queue"],
     controlTowerLabels: {
       openWorkLabel: "Tickets en attente",
       escalatedLabel: "Files bloquees",
@@ -168,7 +163,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Service client financier",
     botHint: "Clients: envoyez RECLAMATION, INFO, CREDIT ou SUIVI DOSSIER.",
     highlights: ["Ticket reclamation", "Suivi dossier", "Routage conseiller"],
-    essentialModules: ["crm_backoffice", "appointments", "queue"],
+    essentialModules: ["appointments", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Dossiers ouverts",
       escalatedLabel: "Dossiers sensibles",
@@ -181,7 +176,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Gestion sinistres et contrats",
     botHint: "Clients: envoyez SINISTRE, POLICE ou RECLAMATION.",
     highlights: ["Declaration sinistre", "Suivi police", "Escalade gestionnaire"],
-    essentialModules: ["crm_backoffice", "interventions", "appointments"],
+    essentialModules: ["interventions", "appointments"],
     controlTowerLabels: {
       openWorkLabel: "Sinistres ouverts",
       escalatedLabel: "Sinistres critiques",
@@ -194,7 +189,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Support abonnements et incidents",
     botHint: "Clients: envoyez FORFAIT, RECLAMATION ou ASSISTANCE.",
     highlights: ["Support forfait", "Incident reseau", "Ticket SAV"],
-    essentialModules: ["crm_backoffice", "interventions", "queue"],
+    essentialModules: ["interventions", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Incidents ouverts",
       escalatedLabel: "Escalades reseau",
@@ -207,7 +202,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Relation usager",
     botHint: "Clients: envoyez FACTURE, PANNE ou RECLAMATION.",
     highlights: ["Suivi facturation", "Signalement panne", "Priorisation interventions"],
-    essentialModules: ["crm_backoffice", "interventions", "queue"],
+    essentialModules: ["interventions", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Pannes ouvertes",
       escalatedLabel: "Interventions en retard",
@@ -220,7 +215,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Inscriptions et suivi apprenants",
     botHint: "Clients: envoyez COURS pour voir les formations disponibles.",
     highlights: ["Inscriptions", "Presence", "Attestations numeriques"],
-    essentialModules: ["appointments", "crm_backoffice", "queue"],
+    essentialModules: ["appointments", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Inscriptions en cours",
       escalatedLabel: "Cas apprenants critiques",
@@ -233,7 +228,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Reservation trajet",
     botHint: "Clients: envoyez TRAJET pour demander un trajet ou une navette.",
     highlights: ["Reservation siege", "Ticket mobile", "Suivi depart"],
-    essentialModules: ["ticketing", "queue", "crm_backoffice"],
+    essentialModules: ["ticketing", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Trajets en cours",
       escalatedLabel: "Retards critiques",
@@ -246,7 +241,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Planning interventions",
     botHint: "Clients: envoyez INTERVENTION + besoin (ex: INTERVENTION CLIM).",
     highlights: ["Demande intervention", "Assignation technicien", "Compte-rendu mission"],
-    essentialModules: ["interventions", "crm_backoffice", "appointments"],
+    essentialModules: ["interventions", "appointments"],
     controlTowerLabels: {
       openWorkLabel: "Interventions ouvertes",
       escalatedLabel: "Tickets critiques",
@@ -259,7 +254,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Gestion location",
     botHint: "Clients: envoyez LOCATION pour voir les biens disponibles.",
     highlights: ["Disponibilite", "Caution", "Contrat digital"],
-    essentialModules: ["products", "orders", "crm_backoffice"],
+    essentialModules: ["products", "orders"],
     controlTowerLabels: {
       openWorkLabel: "Locations en cours",
       escalatedLabel: "Litiges location",
@@ -272,7 +267,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Parcours patient",
     botHint: "Clients: envoyez CONSULTATION pour prendre rendez-vous.",
     highlights: ["Triage initial", "Creneau medecin", "Rappel consultation"],
-    essentialModules: ["appointments", "queue", "crm_backoffice"],
+    essentialModules: ["appointments", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Patients en attente",
       escalatedLabel: "Cas prioritaires",
@@ -286,7 +281,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Démarches administratives",
     botHint: "Citoyens: envoyez DEMARCHE pour démarrer une démarche administrative.",
     highlights: ["Guide démarches", "Pièces à fournir", "Suivi dossier"],
-    essentialModules: ["crm_backoffice", "appointments", "queue"],
+    essentialModules: ["appointments", "queue"],
     controlTowerLabels: {
       openWorkLabel: "Dossiers en cours",
       escalatedLabel: "Dossiers critiques",
@@ -299,7 +294,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Conseils et financement",
     botHint: "Agriculteurs: envoyez CONSEIL ou CREDIT pour obtenir de l'aide.",
     highlights: ["Conseils culturaux", "Météo agricole", "Crédit agricole"],
-    essentialModules: ["crm_backoffice", "products", "appointments"],
+    essentialModules: ["products", "appointments"],
     controlTowerLabels: {
       openWorkLabel: "Demandes en cours",
       escalatedLabel: "Urgences climat",
@@ -312,7 +307,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Location et vente",
     botHint: "Clients: envoyez LOUER ou VENDRE pour immobilier.",
     highlights: ["Visites virtuelles", "Gestion locative", "Estimation gratuite"],
-    essentialModules: ["products", "orders", "crm_backoffice"],
+    essentialModules: ["products", "orders"],
     controlTowerLabels: {
       openWorkLabel: "Biens disponibles",
       escalatedLabel: "Litiges locatifs",
@@ -325,7 +320,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     subtitle: "Services juridiques",
     botHint: "Clients: envoyez CONSULTATION pour conseil juridique.",
     highlights: ["Consultation juridique", "Actes notariés", "Successions"],
-    essentialModules: ["appointments", "crm_backoffice"],
+    essentialModules: ["appointments"],
     controlTowerLabels: {
       openWorkLabel: "Dossiers ouverts",
       escalatedLabel: "Urgences juridiques",

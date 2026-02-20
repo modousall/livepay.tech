@@ -24,7 +24,7 @@ export function useAuth() {
     // Set a timeout to resolve loading state if Firebase takes too long
     const timeout = setTimeout(() => {
       setIsLoading(false);
-    }, 5000);
+    }, 3000); // Reduced from 5000 to 3000ms
 
     const unsubscribe = subscribeToAuth((profile) => {
       clearTimeout(timeout);
@@ -35,7 +35,7 @@ export function useAuth() {
       setIsLoading(false);
       queryClient.setQueryData(["/api/auth/user"], resolvedProfile);
     });
-    
+
     return () => {
       clearTimeout(timeout);
       unsubscribe();
