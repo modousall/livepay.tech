@@ -19,6 +19,8 @@ import Orders from "@/pages/orders";
 import EntityMembersPage from "@/pages/entity-members";
 import Settings from "@/pages/settings";
 import SuperAdmin from "@/pages/super-admin";
+import PrivacyPolicy from "@/pages/privacy";
+import TermsOfService from "@/pages/terms";
 import { isSuperAdmin } from "@/lib/firebase";
 
 function AuthenticatedRouter() {
@@ -83,6 +85,8 @@ function AppRouter() {
   return (
     <>
       <Switch>
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
         <Route path="/login">
           {user ? <AuthenticatedRouter /> : <Login />}
         </Route>
