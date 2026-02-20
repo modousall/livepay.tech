@@ -1,0 +1,31 @@
+{
+  "name": "livepay-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for LivePay",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "setup:secrets": "node scripts/setup-secrets.js",
+    "setup:secrets:auto": "node scripts/auto-setup-secrets.js",
+    "security:check": "node scripts/security-audit.js"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "firebase-admin": "^13.6.1",
+    "firebase-functions": "^7.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "private": true
+}

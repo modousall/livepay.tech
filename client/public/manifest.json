@@ -1,0 +1,21 @@
+{
+  "name": "LivePay - Chatbot WhatsApp Live Commerce",
+  "short_name": "LivePay",
+  "description": "Automatisez vos ventes en live avec le chatbot WhatsApp LivePay",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#22c55e",
+  "orientation": "any",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["finance", "business"],
+  "screenshots": []
+}

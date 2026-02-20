@@ -1,0 +1,169 @@
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+} from "@/components/ui/sidebar";
+import { Link, useLocation } from "wouter";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, MessageCircle, Shield, Crown, Layers, Headset } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { getVendorConfig, isSuperAdmin, type VendorConfig } from "@/lib/firebase";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import { BUSINESS_PROFILES, type BusinessProfileKey, type PersonaModuleId } from "@/lib/business-profiles";
+
+const baseNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Modules", url: "/modules", icon: Layers },
+  { title: "Parametres", url: "/settings", icon: Settings },
+];
+
+const personaNavMap: Record<PersonaModuleId, { title: string; url: string; icon: any }> = {
+  products: { title: "Produits", url: "/products", icon: Package },
+  orders: { title: "Commandes", url: "/orders", icon: ShoppingCart },
+  appointments: { title: "RDV", url: "/modules/appointments", icon: Layers },
+  queue: { title: "File", url: "/modules/queue", icon: Layers },
+  ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: Layers },
+  interventions: { title: "Interventions", url: "/modules/interventions", icon: Layers },
+  crm_backoffice: { title: "CRM Back-office", url: "/modules/crm-backoffice", icon: Headset },
+};
+
+const adminItems = [{ title: "Admin", url: "/admin", icon: Shield }];
+const superAdminItems = [{ title: "Super Admin", url: "/super-admin", icon: Crown }];
+const allModuleIds: PersonaModuleId[] = [
+  "products",
+  "orders",
+  "appointments",
+  "queue",
+  "ticketing",
+  "interventions",
+  "crm_backoffice",
+];
+
+export function AppSidebar() {
+  const [location] = useLocation();
+  const { user, logout } = useAuth();
+  const [vendorConfig, setVendorConfig] = useState<VendorConfig | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      const cfg = await getVendorConfig(user.id);
+      setVendorConfig(cfg);
+    };
+    load();
+  }, [user?.id]);
+
+  const isAdmin = (user as any)?.role === "admin";
+  const isSuperAdminUser = user?.email ? isSuperAdmin(user.email) : false;
+  const profileKey = (vendorConfig?.segment as BusinessProfileKey) || "shop";
+  const profile = BUSINESS_PROFILES[profileKey] || BUSINESS_PROFILES.shop;
+  const isExpertMode = (vendorConfig?.uiMode || "simplified") === "expert";
+
+  const personaItems = useMemo(
+    () =>
+      (isExpertMode ? allModuleIds : profile.essentialModules)
+        .map((id) => personaNavMap[id])
+        .filter(Boolean),
+    [profileKey, isExpertMode]
+  );
+  const displayNavItems = isSuperAdminUser ? [] : [...baseNavItems, ...personaItems];
+
+  const initials = user
+    ? `${(user.firstName || "")[0] || ""}${(user.lastName || "")[0] || ""}`.toUpperCase() || "U"
+    : "U";
+
+  return (
+    <Sidebar>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-md bg-green-600 flex items-center justify-center shrink-0">
+            <MessageCircle className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight">LivePay</span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {displayNavItems.map((item) => (
+                <SidebarMenuItem key={`${item.title}-${item.url}`}>
+                  <SidebarMenuButton asChild isActive={location === item.url}>
+                    <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}>
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {!isSuperAdminUser && isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={location === item.url}>
+                      <Link href={item.url}>
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {isSuperAdminUser && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Super Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {superAdminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={location === item.url}>
+                      <Link href={item.url}>
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+      </SidebarContent>
+      <SidebarFooter className="p-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={user?.profileImageUrl || undefined} />
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium truncate">{isSuperAdminUser ? "Super Admin" : user?.firstName || user?.email || "Vendeur"}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
+          </div>
+          <Button size="icon" variant="ghost" onClick={() => logout()}>
+            <LogOut className="w-4 h-4" />
+          </Button>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

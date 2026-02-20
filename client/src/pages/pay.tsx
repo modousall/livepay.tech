@@ -1,0 +1,629 @@
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Radio, Shield, Clock, CheckCircle2, XCircle, Loader2, CreditCard, Smartphone, Banknote, Copy, Phone, ExternalLink, Waves, Send } from "lucide-react";
+import { useRoute, useSearch } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  getOrderByToken,
+  getProduct,
+  getUserProfile,
+  getVendorConfig,
+  updateOrder,
+  uploadImage,
+  Order,
+  PaymentMethod as FirebasePaymentMethod
+} from "@/lib/firebase";
+
+type PaymentInvoice = {
+  id: string;
+  productName: string;
+  amount: number;
+  clientName: string;
+  status: string;
+  expiresAt: string;
+  vendorName: string;
+  vendorPhone?: string;
+};
+
+type PaymentMethod = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color?: string;
+};
+
+type PaymentResult = {
+  success: boolean;
+  paymentMethod: string;
+  deepLink?: string;
+  ussdCode?: string;
+  instructions?: string;
+  vendorPhone?: string;
+  amount?: number;
+  providerRef?: string;
+};
+
+const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
+  { id: "wave", name: "Wave", description: "Paiement mobile", icon: "wave" },
+  { id: "orange_money", name: "Orange Money", description: "Paiement mobile", icon: "orange" },
+  { id: "mtn_momo", name: "MTN MoMo", description: "Paiement mobile", icon: "mtn" },
+  { id: "moov_money", name: "Moov Money", description: "Paiement mobile", icon: "moov" },
+  { id: "free_money", name: "Free Money", description: "Paiement mobile", icon: "free" },
+  { id: "cash", name: "Espèces", description: "Main propre", icon: "cash" },
+];
+
+const methodIcons: Record<string, typeof Smartphone> = {
+  wave: Waves,
+  orange: Smartphone,
+  orange_money: Smartphone,
+  free_money: Smartphone,
+  moov_money: Smartphone,
+  mtn_momo: Smartphone,
+  card: CreditCard,
+  cash: Banknote,
+  send: Send,
+};
+
+const methodColors: Record<string, string> = {
+  wave: "text-cyan-500",
+  orange_money: "text-orange-500",
+  mtn_momo: "text-yellow-500",
+  moov_money: "text-blue-600",
+  free_money: "text-red-500",
+  card: "text-violet-500",
+  cash: "text-green-500",
+};
+
+export default function Pay() {
+  const [, params] = useRoute("/pay/:token");
+  const { toast } = useToast();
+  const token = params?.token;
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const returnStatus = urlParams.get("status");
+  const [timeLeft, setTimeLeft] = useState("");
+  const [expired, setExpired] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<string>("wave");
+  const [waitingPayment, setWaitingPayment] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const [showProofUpload, setShowProofUpload] = useState(false);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
+  const [proofImage, setProofImage] = useState<File | null>(null);
+  const [clientPhone, setClientPhone] = useState("");
+  
+  // Firebase state
+  const [invoice, setInvoice] = useState<PaymentInvoice | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [order, setOrder] = useState<Order | null>(null);
+
+  const methods = DEFAULT_PAYMENT_METHODS;
+
+  // Load order and related data
+  useEffect(() => {
+    if (!token) return;
+    
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const orderData = await getOrderByToken(token);
+        if (!orderData) {
+          throw new Error("Order not found");
+        }
+        setOrder(orderData);
+
+        // Get product info
+        const product = await getProduct(orderData.productId);
+
+        // Get vendor info
+        const vendorProfile = await getUserProfile(orderData.vendorId);
+        const vendorConfig = await getVendorConfig(orderData.vendorId);
+
+        // Calculate expiration
+        const expiresAt = orderData.reservedUntil ||
+          new Date(orderData.createdAt.getTime() + 30 * 60 * 1000); // 30 min default
+
+        // Build vendor name from profile or config
+        const vendorDisplayName = vendorProfile
+          ? [vendorProfile.firstName, vendorProfile.lastName].filter(Boolean).join(' ') || vendorProfile.businessName
+          : vendorConfig?.businessName;
+
+        // Set client phone from order
+        setClientPhone(orderData.clientPhone);
+
+        setInvoice({
+          id: orderData.id,
+          productName: product?.name || "Produit",
+          amount: orderData.totalAmount,
+          clientName: orderData.clientName || orderData.clientPhone,
+          status: orderData.status,
+          expiresAt: expiresAt.toISOString(),
+          vendorName: vendorDisplayName || "Vendeur",
+          vendorPhone: vendorConfig?.mobileMoneyNumber || vendorProfile?.phone,
+        });
+      } catch (err) {
+        console.error("Error loading payment data:", err);
+        setError(err as Error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [token]);
+
+  useEffect(() => {
+    if ((returnStatus === "completed" || returnStatus === "failed") && token) {
+      setWaitingPayment(true);
+    }
+  }, [returnStatus, token]);
+
+  // Poll for payment status when waiting
+  useEffect(() => {
+    if (!waitingPayment || !token) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const orderData = await getOrderByToken(token);
+        if (orderData && orderData.status === "paid") {
+          setWaitingPayment(false);
+          setInvoice(prev => prev ? { ...prev, status: "paid" } : null);
+          toast({ title: "Paiement confirmé" });
+          clearInterval(pollInterval);
+        }
+      } catch {}
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [waitingPayment, token, toast]);
+
+  useEffect(() => {
+    if (waitingPayment && invoice?.status === "paid") {
+      setWaitingPayment(false);
+      toast({ title: "Paiement confirmé" });
+    }
+  }, [waitingPayment, invoice?.status, toast]);
+
+  useEffect(() => {
+    if (!invoice?.expiresAt || invoice.status !== "pending") return;
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const exp = new Date(invoice.expiresAt).getTime();
+      const diff = exp - now;
+
+      if (diff <= 0) {
+        setTimeLeft("Expiré");
+        setExpired(true);
+        clearInterval(interval);
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [invoice?.expiresAt, invoice?.status]);
+
+  const handlePayment = async () => {
+    if (!order || !token) return;
+
+    setIsProcessing(true);
+    try {
+      // Update order with selected payment method
+      await updateOrder(order.id, {
+        paymentMethod: selectedMethod as FirebasePaymentMethod,
+        status: "reserved",
+      });
+
+      // Normalize phone numbers
+      const vendorPhoneDigits = (invoice?.vendorPhone || "").replace(/\D/g, "");
+      const clientPhoneDigits = (order.clientPhone || "").replace(/\D/g, "");
+      
+      // Build payment result based on method
+      const result: PaymentResult = {
+        success: true,
+        paymentMethod: selectedMethod,
+        amount: order.totalAmount,
+        vendorPhone: invoice?.vendorPhone,
+      };
+
+      // Generate payment instructions and deep links based on method
+      if (selectedMethod === "wave") {
+        result.instructions = "Envoyez le montant au numéro du vendeur via Wave";
+        // Wave deep link: wave://send?phone=NUMBER&amount=AMOUNT
+        result.deepLink = `wave://send?phone=${vendorPhoneDigits}&amount=${order.totalAmount}&reference=${token}`;
+        result.ussdCode = "*144#";
+      } else if (selectedMethod === "orange_money") {
+        result.instructions = "Envoyez le montant via Orange Money";
+        // Orange Money USSD: #144*1*PHONE*AMOUNT#
+        result.ussdCode = `#144*1*${vendorPhoneDigits}*${order.totalAmount}#`;
+        result.deepLink = `om://send?phone=${vendorPhoneDigits}&amount=${order.totalAmount}`;
+      } else if (selectedMethod === "mtn_momo") {
+        result.instructions = "Envoyez le montant via MTN Mobile Money";
+        result.ussdCode = `*126*${vendorPhoneDigits}*${order.totalAmount}#`;
+        result.deepLink = `mtnmomo://transfer?phone=${vendorPhoneDigits}&amount=${order.totalAmount}`;
+      } else if (selectedMethod === "moov_money") {
+        result.instructions = "Envoyez le montant via Moov Money";
+        result.ussdCode = `#155*${vendorPhoneDigits}*${order.totalAmount}#`;
+        result.deepLink = `moovmoney://send?phone=${vendorPhoneDigits}&amount=${order.totalAmount}`;
+      } else if (selectedMethod === "free_money") {
+        result.instructions = "Envoyez le montant via Free Money";
+        result.ussdCode = `*166*${vendorPhoneDigits}*${order.totalAmount}#`;
+        result.deepLink = `freemoney://send?phone=${vendorPhoneDigits}&amount=${order.totalAmount}`;
+      } else if (selectedMethod === "cash") {
+        result.instructions = "Contactez le vendeur pour organiser le paiement en espèces";
+        result.instructions += `\n\nNuméro: ${invoice?.vendorPhone || "Non disponible"}`;
+      } else if (selectedMethod === "card") {
+        result.instructions = "Le paiement par carte sera disponible bientôt";
+      }
+
+      setPaymentResult(result);
+      setShowProofUpload(true);
+
+      // Try to open the deep link if available and not cash
+      if (result.deepLink && selectedMethod !== "cash") {
+        // Small delay to let the UI update first
+        setTimeout(() => {
+          window.location.href = result.deepLink!;
+        }, 500);
+      }
+
+      setWaitingPayment(true);
+    } catch (err) {
+      console.error("Payment initialization error:", err);
+      toast({
+        title: "Erreur",
+        description: "Échec de l'initialisation du paiement",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({ title: `${label} copié !` });
+    });
+  };
+
+  const handleProofUpload = async () => {
+    if (!proofImage || !order) return;
+
+    setIsUploadingProof(true);
+    try {
+      // Upload proof image to Firebase Storage
+      const path = `payment-proofs/${order.id}/${Date.now()}_${proofImage.name}`;
+      const imageUrl = await uploadImage(proofImage, path);
+
+      // Update order with proof URL
+      await updateOrder(order.id, {
+        paymentProof: imageUrl,
+        status: "pending", // Changed from reserved to pending verification
+      });
+
+      toast({
+        title: "Preuve envoyée !",
+        description: "Le vendeur va vérifier votre paiement.",
+      });
+
+      setShowProofUpload(false);
+    } catch (err) {
+      console.error("Proof upload error:", err);
+      toast({
+        title: "Erreur",
+        description: "Échec de l'envoi de la preuve",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingProof(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-sm p-6 space-y-4">
+          <Skeleton className="h-6 w-32 mx-auto" />
+          <Skeleton className="h-4 w-48 mx-auto" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !invoice) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 gap-4">
+        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+          <XCircle className="w-6 h-6 text-destructive" />
+        </div>
+        <p className="text-muted-foreground text-center">
+          Ce lien de paiement est invalide ou a expire.
+        </p>
+      </div>
+    );
+  }
+
+  const isPaid = invoice.status === "paid";
+  const isExpired = invoice.status === "expired" || expired;
+  const isPending = invoice.status === "pending" && !expired;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-4 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+              <Radio className="w-3.5 h-3.5 text-primary-foreground" />
+            </div>
+            <span className="text-sm font-semibold">LivePay</span>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-4">
+          <Card className="p-6 space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-xs text-muted-foreground">Facture de</p>
+              <p className="font-semibold" data-testid="text-vendor-name">{invoice.vendorName}</p>
+            </div>
+
+            <div className="text-center space-y-2 py-4 border-y">
+              <p className="text-sm text-muted-foreground" data-testid="text-product-name">{invoice.productName}</p>
+              <p className="text-3xl font-bold" data-testid="text-amount">
+                {invoice.amount.toLocaleString("fr-FR")} <span className="text-lg">FCFA</span>
+              </p>
+              <p className="text-xs text-muted-foreground" data-testid="text-client-name">
+                Pour: {invoice.clientName}
+              </p>
+            </div>
+
+            {isPaid && (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-7 h-7 text-green-500" />
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-green-500">Paiement confirme</p>
+                  <p className="text-xs text-muted-foreground mt-1">Merci pour votre achat</p>
+                </div>
+              </div>
+            )}
+
+            {isExpired && (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="w-7 h-7 text-destructive" />
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-destructive">Lien expire</p>
+                  <p className="text-xs text-muted-foreground mt-1">Contactez le vendeur pour un nouveau lien</p>
+                </div>
+              </div>
+            )}
+
+            {waitingPayment && isPending && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                {paymentResult ? (
+                  <>
+                    <div className="w-full space-y-4">
+                      <div className="text-center">
+                        <p className="font-semibold text-lg">Effectuez le paiement</p>
+                        <p className="text-sm text-muted-foreground mt-1">{paymentResult.instructions}</p>
+                      </div>
+
+                      {/* Deep Link Button */}
+                      {paymentResult.deepLink && (
+                        <Button
+                          className="w-full"
+                          size="lg"
+                          onClick={() => window.location.href = paymentResult.deepLink!}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Ouvrir {DEFAULT_PAYMENT_METHODS.find(m => m.id === paymentResult.paymentMethod)?.name || "l'application"}
+                        </Button>
+                      )}
+
+                      {/* USSD Code */}
+                      {paymentResult.ussdCode && (
+                        <div className="bg-muted rounded-lg p-4 space-y-2">
+                          <p className="text-xs text-muted-foreground font-medium">Code USSD (composez sur votre téléphone)</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <code className="text-lg font-mono font-bold flex-1">{paymentResult.ussdCode}</code>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => copyToClipboard(paymentResult.ussdCode!, "Code USSD")}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          {/* Direct dial link for mobile */}
+                          <a
+                            href={`tel:${paymentResult.ussdCode}`}
+                            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <Phone className="w-4 h-4" />
+                            Appeler ce code
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Vendor Phone */}
+                      {paymentResult.vendorPhone && (
+                        <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                          <p className="text-xs text-muted-foreground">Numéro du vendeur</p>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{paymentResult.vendorPhone}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(paymentResult.vendorPhone!, "Numéro")}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Amount reminder */}
+                      <div className="text-center py-2 border-t">
+                        <p className="text-sm text-muted-foreground">Montant à envoyer</p>
+                        <p className="text-2xl font-bold">{(paymentResult.amount || invoice.amount).toLocaleString("fr-FR")} FCFA</p>
+                      </div>
+
+                      {/* Proof Upload Section */}
+                      {showProofUpload && selectedMethod !== "card" && (
+                        <div className="border-t pt-4 space-y-3">
+                          <div className="text-center">
+                            <p className="font-semibold text-sm">📸 Preuve de paiement</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Prenez une capture d'écran et envoyez-la
+                            </p>
+                          </div>
+                          
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => setProofImage(e.target.files?.[0] || null)}
+                            className="block w-full text-sm text-muted-foreground
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-md file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-primary/10 file:text-primary
+                              hover:file:bg-primary/20"
+                            data-testid="input-proof-upload"
+                          />
+
+                          {proofImage && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              <span>{proofImage.name}</span>
+                            </div>
+                          )}
+
+                          <Button
+                            className="w-full"
+                            onClick={handleProofUpload}
+                            disabled={!proofImage || isUploadingProof}
+                          >
+                            {isUploadingProof ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Envoi en cours...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-4 h-4 mr-2" />
+                                Envoyer la preuve
+                              </>
+                            )}
+                          </Button>
+
+                          <p className="text-[10px] text-center text-muted-foreground">
+                            Après envoi, le vendeur vérifiera votre paiement sous peu.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>En attente de confirmation...</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <div className="text-center">
+                      <p className="font-semibold">Vérification du paiement...</p>
+                      <p className="text-xs text-muted-foreground mt-1">Veuillez patienter pendant la confirmation</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {isPending && !waitingPayment && (
+              <>
+                <div className="flex items-center justify-center gap-2 text-amber-500">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium" data-testid="text-timer">
+                    Expire dans {timeLeft}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Mode de paiement</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {DEFAULT_PAYMENT_METHODS.map((method) => {
+                      const IconComponent = methodIcons[method.icon] || Smartphone;
+                      const isSelected = selectedMethod === method.id;
+                      return (
+                        <button
+                          key={method.id}
+                          onClick={() => setSelectedMethod(method.id)}
+                          className={`relative flex flex-col items-center gap-1.5 p-3 rounded-md border-2 transition-colors ${
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover-elevate"
+                          }`}
+                          data-testid={`button-method-${method.id}`}
+                        >
+                          <IconComponent className={`w-5 h-5 ${methodColors[method.id] || "text-foreground"}`} />
+                          <span className="text-xs font-medium">{method.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handlePayment}
+                  disabled={isProcessing}
+                  data-testid="button-pay"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Traitement...
+                    </>
+                  ) : (
+                    `Payer avec ${DEFAULT_PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name || selectedMethod}`
+                  )}
+                </Button>
+
+                {selectedMethod !== "cash" && (
+                  <p className="text-[10px] text-center text-muted-foreground">
+                    Vous serez redirigé vers l'application de paiement mobile
+                  </p>
+                )}
+              </>
+            )}
+          </Card>
+
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+            <Shield className="w-3 h-3" />
+            <span>Paiement securise - Zone UEMOA</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
