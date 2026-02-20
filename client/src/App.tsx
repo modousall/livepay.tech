@@ -16,12 +16,12 @@ import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
-import ModulesPage from "@/pages/modules";
+// ModulesPage removed - Parcours menu removed
 import AppointmentsPage from "@/pages/appointments";
 import QueueManagementPage from "@/pages/queue-management";
 import TicketingOpsPage from "@/pages/ticketing-ops";
 import InterventionsPage from "@/pages/interventions";
-import CrmBackofficePage from "@/pages/crm-backoffice";
+// CrmBackofficePage removed - CRM is integrated into WhatsApp interactions
 import Products from "@/pages/products";
 import Orders from "@/pages/orders";
 import EntityMembersPage from "@/pages/entity-members";
@@ -69,12 +69,11 @@ function AuthenticatedRouter() {
                 <>
                   <Route path="/" component={Dashboard} />
                   <Route path="/dashboard" component={Dashboard} />
-                  <Route path="/modules" component={ModulesPage} />
+                  {/* Parcours routes removed - modules accessed directly */}
                   <Route path="/modules/appointments" component={AppointmentsPage} />
                   <Route path="/modules/queue" component={QueueManagementPage} />
                   <Route path="/modules/ticketing" component={TicketingOpsPage} />
                   <Route path="/modules/interventions" component={InterventionsPage} />
-                  <Route path="/modules/crm-backoffice" component={CrmBackofficePage} />
                   <Route path="/products" component={Products} />
                   <Route path="/orders" component={Orders} />
                   <Route path="/entity-members" component={EntityMembersPage} />

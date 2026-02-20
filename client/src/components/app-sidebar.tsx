@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, MessageCircle, Shield, Crown, Layers, Headset, UsersRound } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -22,7 +22,7 @@ import { BUSINESS_PROFILES, type BusinessProfileKey, type PersonaModuleId } from
 
 const baseNavItems = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
-  { title: "Parcours", url: "/modules", icon: Layers },
+  // Parcours removed - not needed
   { title: "Equipe", url: "/entity-members", icon: UsersRound },
   { title: "Parametres", url: "/settings", icon: Settings },
 ];
@@ -30,11 +30,10 @@ const baseNavItems = [
 const personaNavMap: Record<PersonaModuleId, { title: string; url: string; icon: any }> = {
   products: { title: "Catalogue", url: "/products", icon: Package },
   orders: { title: "Ventes", url: "/orders", icon: ShoppingCart },
-  appointments: { title: "Agenda", url: "/modules/appointments", icon: Layers },
-  queue: { title: "File d'attente", url: "/modules/queue", icon: Layers },
-  ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: Layers },
-  interventions: { title: "Interventions", url: "/modules/interventions", icon: Layers },
-  // CRM removed - it's now integrated into WhatsApp interactions, not a separate menu
+  appointments: { title: "Agenda", url: "/modules/appointments", icon: LayoutDashboard },
+  queue: { title: "File d'attente", url: "/modules/queue", icon: LayoutDashboard },
+  ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: LayoutDashboard },
+  interventions: { title: "Interventions", url: "/modules/interventions", icon: LayoutDashboard },
 };
 
 const adminItems = [{ title: "Admin", url: "/admin", icon: Shield }];
@@ -46,7 +45,6 @@ const allModuleIds: PersonaModuleId[] = [
   "queue",
   "ticketing",
   "interventions",
-  // crm_backoffice removed - CRM is now integrated into WhatsApp interactions
 ];
 
 export function AppSidebar() {
