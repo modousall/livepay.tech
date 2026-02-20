@@ -51,7 +51,7 @@ const PRICING_PLANS = [
       "Statistiques de base",
       "Support email",
     ],
-    cta: "Essai gratuit 14 jours",
+    cta: "Demander un accès",
     popular: false,
   },
   {
@@ -68,7 +68,7 @@ const PRICING_PLANS = [
       "Escalade automatique",
       "Support prioritaire",
     ],
-    cta: "Essai gratuit 14 jours",
+    cta: "Demander un accès",
     popular: true,
   },
   {
@@ -123,28 +123,26 @@ export default function Landing() {
                 <span className="text-green-500">relation client</span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg">
-                Une plateforme unifiée pour automatiser et gérer vos conversations 
-                WhatsApp avec vos clients. Bot intelligent, escalade humaine et 
+                Une plateforme unifiée pour automatiser et gérer vos conversations
+                WhatsApp avec vos clients. Bot intelligent, escalade humaine et
                 statistiques en temps réel.
               </p>
               <div className="flex flex-wrap gap-3">
                 <a href="/login">
                   <Button size="lg" className="bg-green-500 hover:bg-green-600" data-testid="button-request-access">
-                    Demander une démo
+                    Se connecter
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </a>
-                <a href="#pricing">
+                <a href="mailto:contact@livetech.africa?subject=Demande%20de%20d%C3%A9mo%20LIVE%20TECH">
                   <Button size="lg" variant="outline">
-                    Voir les tarifs
+                    Contacter pour démo
                   </Button>
                 </a>
               </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Shield className="w-3 h-3 text-green-500" /> Multi-tenant sécurisé</span>
-                <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-green-500" /> Déploiement rapide</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-green-500" /> Support 24/7</span>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                💡 Accès sur invitation uniquement. Contactez-nous pour activer votre compte.
+              </p>
             </div>
 
             <Card className="p-6 space-y-4">
@@ -266,6 +264,11 @@ export default function Landing() {
                       {plan.cta}
                     </Button>
                   </a>
+                  {plan.name !== "Enterprise" && (
+                    <p className="text-xs text-center text-muted-foreground mt-2">
+                      💡 Contactez-nous pour activer votre essai
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ))}
