@@ -69,7 +69,7 @@ export function InitiateChatDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Clean phone number
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     if (cleanPhone.length < 9) {
@@ -92,15 +92,25 @@ export function InitiateChatDialog({
       message = "Bonjour ! Comment puis-je vous aider ?";
     }
 
-    // Open WhatsApp Web/App directly
+    // ✅ CORRECTION: Ouvrir WhatsApp Web/App directement
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
+    
+    // Vérifier si on est sur mobile ou desktop
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Sur mobile, ouvrir l'app WhatsApp directement
+      window.location.href = whatsappUrl;
+    } else {
+      // Sur desktop, ouvrir WhatsApp Web dans un nouvel onglet
+      window.open(whatsappUrl, "_blank");
+    }
 
     toast({
       title: "WhatsApp ouvert",
       description: "Envoyez votre message via WhatsApp",
     });
-    
+
     setOpen(false);
     setPhone("");
     setSelectedProductId("");

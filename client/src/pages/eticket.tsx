@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRoute } from "wouter";
-import { Download, Printer, Ticket, Store, Phone } from "lucide-react";
+import { Download, Printer, Ticket, Store, Phone, Share2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getOrderByReceiptToken, getProduct, getUserProfile, type Order, type Product, type UserProfile } from "@/lib/firebase";
+import { getOrderByReceiptToken, getProduct, getUserProfile, updateOrder, type Order, type Product, type UserProfile } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 function formatAmount(amount: number): string {
   return `${new Intl.NumberFormat("fr-FR").format(Number(amount || 0))} FCFA`;
@@ -24,12 +25,14 @@ async function loadImage(url: string): Promise<HTMLImageElement | null> {
 export default function ETicketPage() {
   const [, params] = useRoute("/eticket/:token");
   const token = params?.token || "";
+  const { toast } = useToast();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [vendor, setVendor] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -141,6 +144,123 @@ export default function ETicketPage() {
     link.click();
   };
 
+  const sendTicketToClient = async () => {
+    if (!order || !product) return;
+
+    setIsSending(true);
+    try {
+      // Generate image
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1520;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Draw ticket
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 54px sans-serif";
+      ctx.fillText("E-TICKET / RECU", 60, 90);
+
+      ctx.font = "32px sans-serif";
+      ctx.fillStyle = "#374151";
+      ctx.fillText(`Commande: #${order.id}`, 60, 150);
+      ctx.fillText(`Date: ${ticketDate}`, 60, 198);
+
+      let y = 280;
+      if (product?.imageUrl) {
+        const img = await loadImage(product.imageUrl);
+        if (img) {
+          ctx.drawImage(img, 60, y, 300, 300);
+        }
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 40px sans-serif";
+      ctx.fillText(order.productName || product.name || "Produit", 390, y + 60);
+      ctx.font = "30px sans-serif";
+      ctx.fillStyle = "#374151";
+      ctx.fillText(`Code: ${product.keyword || "-"}`, 390, y + 110);
+      ctx.fillText(`Quantite: ${order.quantity}`, 390, y + 160);
+      ctx.fillText(`Montant: ${formatAmount(order.totalAmount)}`, 390, y + 210);
+
+      y = 690;
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 34px sans-serif";
+      ctx.fillText("Infos entite", 60, y);
+      ctx.font = "30px sans-serif";
+      ctx.fillStyle = "#374151";
+      ctx.fillText(vendorName, 60, y + 52);
+      ctx.fillText(vendor?.phone || "-", 60, y + 98);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 34px sans-serif";
+      ctx.fillText("Statut: PAYE", 60, y + 190);
+      ctx.font = "24px monospace";
+      ctx.fillStyle = "#1f2937";
+      ctx.fillText(`Recu genere le ${ticketDate}`, 60, y + 234);
+
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "24px sans-serif";
+      ctx.fillText("Document genere automatiquement par LivePay.", 60, 1450);
+
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((b) => resolve(b!), "image/png");
+      });
+
+      // Create file
+      const file = new File([blob], `eticket-${order.id}.png`, { type: "image/png" });
+
+      // Share via Web Share API (if supported)
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "E-Ticket",
+          text: `Votre e-ticket pour ${order.productName}`,
+          files: [file],
+        });
+        toast({
+          title: "Ticket envoyé",
+          description: "Le ticket a été partagé avec succès",
+        });
+      } else {
+        // Fallback: Download and open WhatsApp
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = `eticket-${order.id}.png`;
+        link.click();
+
+        // Open WhatsApp to send to client
+        const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
+        const message = `🎫 *Votre E-Ticket*\n\nCommande: #${order.id}\nProduit: ${order.productName}\nMontant: ${formatAmount(order.totalAmount)}\n\n✅ Paiement confirmé - Ticket en pièce jointe`;
+        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, "_blank");
+
+        toast({
+          title: "Téléchargement + WhatsApp",
+          description: "Le ticket a été téléchargé. Envoyez-le via WhatsApp.",
+        });
+      }
+
+      // Mark order as sent
+      await updateOrder(order.id, {
+        status: "paid",
+        paymentProof: `eticket-${order.id}.png`,
+      });
+    } catch (err) {
+      console.error("Error sending ticket:", err);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer le ticket",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const printPdf = () => {
     window.print();
   };
@@ -204,6 +324,14 @@ export default function ETicketPage() {
               <Button variant="outline" onClick={printPdf} className="gap-2">
                 <Printer className="h-4 w-4" />
                 Imprimer / PDF
+              </Button>
+              <Button onClick={sendTicketToClient} disabled={isSending} className="gap-2 bg-green-600 hover:bg-green-700">
+                {isSending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+                {isSending ? "Envoi..." : "Envoyer au client"}
               </Button>
             </div>
           </>

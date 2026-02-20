@@ -71,20 +71,38 @@ export default function Orders() {
   // Update order status
   const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
     if (!user) return;
-    
+
     try {
       setIsUpdating(true);
       await updateOrder(orderId, { status: newStatus });
-      
+
       // Update local state
-      setOrders(orders.map(o => 
+      setOrders(orders.map(o =>
         o.id === orderId ? { ...o, status: newStatus } : o
       ));
-      
-      toast({
-        title: "Commande mise à jour",
-        description: `La commande est maintenant ${statusConfig[newStatus].label}`,
-      });
+
+      // ✅ NOTIFIER LE CLIENT PAR WHATSAPP
+      if (newStatus === "paid") {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+          const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
+          const message = `✅ *Paiement Confirmé !*\n\nBonjour ${order.clientName || "Cher client"},\n\nVotre commande #${orderId} a été *payée avec succès*.\n\n📦 Produit: ${getProductName(order.productId)}\n💰 Montant: ${formatPrice(order.totalAmount)}\n\nMerci pour votre confiance !`;
+          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+          
+          // Ouvrir WhatsApp pour envoyer la notification
+          window.open(whatsappUrl, "_blank");
+          
+          toast({
+            title: "Paiement confirmé",
+            description: "La notification WhatsApp a été ouverte. Envoyez le message au client.",
+          });
+        }
+      } else {
+        toast({
+          title: "Commande mise à jour",
+          description: `La commande est maintenant ${statusConfig[newStatus].label}`,
+        });
+      }
     } catch (error) {
       toast({
         title: "Erreur",
