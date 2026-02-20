@@ -116,8 +116,15 @@ export async function loginWithEmail(email: string, password: string): Promise<U
     // Remove entity association for super admin
     profile.entityId = undefined;
     profile.entityRole = undefined;
-    await updateDoc(doc(db, "users", user.uid), { 
+    await updateDoc(doc(db, "users", user.uid), {
       role: "superadmin",
+      entityId: null,
+      entityRole: null,
+    });
+  } else if (isSuperAdmin(email) && (profile.entityId || profile.entityRole)) {
+    // Fix: Remove entity association from existing super admin profiles
+    console.log("Removing entity association from super admin profile...");
+    await updateDoc(doc(db, "users", user.uid), {
       entityId: null,
       entityRole: null,
     });
@@ -125,7 +132,8 @@ export async function loginWithEmail(email: string, password: string): Promise<U
 
   return {
     ...profile,
-    entityId: profile.entityId || profile.id,
+    // Super admin does NOT have an entity
+    entityId: isSuperAdmin(profile.email) ? undefined : (profile.entityId || profile.id),
   };
 }
 
@@ -283,7 +291,7 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void): (
     if (firebaseUser) {
       try {
         let profile = await getUserProfile(firebaseUser.uid);
-        
+
         // If profile doesn't exist in Firestore, create it
         if (!profile) {
           const email = firebaseUser.email || "";
@@ -301,8 +309,8 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void): (
             firstName: firebaseUser.displayName?.split(' ')[0],
             lastName: firebaseUser.displayName?.split(' ').slice(1).join(' '),
             role: "superadmin",
-            entityId: firebaseUser.uid,
-            entityRole: "owner",
+            entityId: undefined, // Super admin has NO entity
+            entityRole: undefined, // Super admin has NO entity role
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -312,8 +320,19 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void): (
             createdAt: Timestamp.fromDate(profile.createdAt),
             updatedAt: Timestamp.fromDate(profile.updatedAt),
           });
+        } else if (isSuperAdmin(firebaseUser.email || "")) {
+          // Fix existing super admin profile - remove entity association
+          if (profile.entityId || profile.entityRole) {
+            console.log("Fixing super admin profile - removing entity association...");
+            profile.entityId = undefined;
+            profile.entityRole = undefined;
+            await updateDoc(doc(db, "users", firebaseUser.uid), {
+              entityId: null,
+              entityRole: null,
+            });
+          }
         }
-        
+
         callback(profile);
       } catch (error) {
         console.error("Error getting user profile:", error);
