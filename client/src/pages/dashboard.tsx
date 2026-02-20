@@ -36,6 +36,7 @@ import {
   type CrmTicket,
   type CrmModule,
 } from "@/lib/firebase";
+import { getOrCreateVendorConfig, applySectorDefaults } from "@/lib/config-fix";
 import { BUSINESS_PROFILES, PERSONA_MODULES, type BusinessProfileKey } from "@/lib/business-profiles";
 
 interface OrderStats {
@@ -157,31 +158,64 @@ export default function Dashboard() {
   
   // Load data from Firebase
   useEffect(() => {
-    if (!user) return;
-    
+    if (!user || !entityId) return;
+
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [configData, productsData, ordersData] = await Promise.all([
-          getVendorConfig(entityId),
+        
+        // Utiliser getOrCreateVendorConfig avec gestion de email undefined
+        const configData = await getOrCreateVendorConfig(
+          entityId,
+          user.email || user.firstName || 'utilisateur'
+        );
+        
+        const [productsData, ordersData] = await Promise.all([
           getProducts(entityId),
           getOrders(entityId),
         ]);
+        
         setConfig(configData);
         setProducts(productsData);
         setOrders(ordersData);
+        
         const crmData = await getCrmTickets(entityId);
         setCrmTickets(crmData);
+        
+        // Appliquer les paramètres du secteur si c'est une nouvelle config
+        if (!configData.reservationDurationMinutes || configData.segment === "shop") {
+          // Détecter le secteur et appliquer les paramètres
+          const detectedSegment = configData.segment || "shop";
+          await applySectorDefaults(entityId, detectedSegment);
+          
+          // Recharger la config avec les nouveaux paramètres
+          const updatedConfig = await getOrCreateVendorConfig(
+            entityId,
+            user.email || user.firstName || 'utilisateur'
+          );
+          setConfig(updatedConfig);
+        }
+        
+        console.log('[Dashboard] Data loaded successfully:', {
+          configId: configData.id,
+          segment: configData.segment,
+          products: productsData.length,
+          orders: ordersData.length,
+        });
       } catch (error) {
         console.error("Error loading dashboard data:", error);
-        toast({ title: "Erreur", description: "Impossible de charger les données", variant: "destructive" });
+        toast({ 
+          title: "Erreur", 
+          description: "Impossible de charger les données. Veuillez rafraîchir la page.", 
+          variant: "destructive" 
+        });
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
-  }, [entityId, toast]);
+  }, [entityId, user, toast]);
   
   // Calculate stats from orders
   const stats: OrderStats = {
@@ -253,7 +287,7 @@ export default function Dashboard() {
   };
 
   const handleApplyContextualOnboarding = async () => {
-    if (!user || !config) return;
+    if (!user || !config || !entityId) return;
     setIsApplyingContextual(true);
 
     try {

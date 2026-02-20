@@ -87,14 +87,70 @@ service cloud.firestore {
 
     // Orders
     match /orders/{orderId} {
+      // Helper functions for order validation
+      function orderAmountIsValid() {
+        return request.resource.data.totalAmount > 0 &&
+               request.resource.data.quantity > 0 &&
+               request.resource.data.unitPrice > 0 &&
+               request.resource.data.totalAmount ==
+                 (request.resource.data.quantity * request.resource.data.unitPrice);
+      }
+
+      function orderPaymentMethodIsValid() {
+        return request.resource.data.paymentMethod in [
+          'wave', 'orange_money', 'card', 'cash', 'mtn_momo', 'moov_money', 'free_money'
+        ];
+      }
+
+      function orderStatusIsValid() {
+        return request.resource.data.status in [
+          'pending', 'reserved', 'paid', 'expired', 'cancelled'
+        ];
+      }
+
+      function orderHasRequiredFields() {
+        return request.resource.data.keys().hasAll([
+          'vendorId', 'productId', 'clientPhone', 'quantity',
+          'unitPrice', 'totalAmount', 'status', 'expiresAt'
+        ]);
+      }
+
+      function phoneIsValid() {
+        return request.resource.data.clientPhone.matches('[0-9+\\-() ]{10,20}');
+      }
+
+      function expiresAtIsValid() {
+        return request.resource.data.expiresAt > request.time;
+      }
+
       // Get: single document read
-      allow get: if isAuthenticated() && 
+      allow get: if isAuthenticated() &&
         (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
-      // List: query operations (must be authenticated)
+
+      // List: query operations
       allow list: if isAuthenticated();
-      allow create: if true; // Public can create orders (WhatsApp clients)
-      allow update: if isAuthenticated() && 
-        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
+
+      // Create: STRICT VALIDATION - Only WhatsApp webhooks (with IP allowlist)
+      allow create: if request.auth == null &&
+        // Vérifier que c'est un webhook (pas de user auth)
+        orderHasRequiredFields() &&
+        orderAmountIsValid() &&
+        (request.resource.data.paymentMethod == null || orderPaymentMethodIsValid()) &&
+        orderStatusIsValid() &&
+        phoneIsValid() &&
+        expiresAtIsValid();
+
+      // Update: Seulement vendor ou admin
+      allow update: if isAuthenticated() &&
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin()) &&
+        (
+          // Whitelist des champs modifiables
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'paymentMethod', 'paymentProof', 'pspReference', 
+                      'paidAt', 'notes', 'deliveryAddress', 'updatedAt',
+                      'returnId', 'returnStatus', 'refundStatus'])
+        );
+
       allow delete: if isAdminOrSuperAdmin();
     }
 

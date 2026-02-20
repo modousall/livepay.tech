@@ -2,6 +2,8 @@ import { type Server } from "http";
 
 import type { Express } from "express";
 
+import { setupPaymentWebhooks } from "./lib/payment-webhooks";
+
 /**
  * Minimal routes for development server
  * All data operations are handled directly by Firebase in the client
@@ -9,17 +11,21 @@ import type { Express } from "express";
  * - Local development (Vite proxy)
  * - Health check endpoint
  * - WhatsApp webhook (to be moved to Firebase Cloud Functions for production)
+ * - Payment webhooks (Wave, Orange Money, etc.)
  */
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // Setup payment webhooks with idempotence
+  setupPaymentWebhooks(app);
+
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
-    res.json({ 
-      status: "ok", 
+    res.json({
+      status: "ok",
       timestamp: new Date().toISOString(),
       mode: "firebase",
       message: "LivePay API - Data stored in Firebase"

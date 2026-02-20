@@ -1172,6 +1172,68 @@ export default function SuperAdmin() {
                     </div>
                   )}
                 </div>
+
+                {/* PayDunya */}
+                <Separator />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Globe className="h-5 w-5 text-green-500" />
+                      <span className="font-medium">PayDunya (PSP Afrique)</span>
+                    </div>
+                    <Switch
+                      checked={platformConfig?.payment.paydunyaEnabled || false}
+                      onCheckedChange={(checked) => updateConfig("payment", "paydunyaEnabled", checked)}
+                    />
+                  </div>
+                  {platformConfig?.payment.paydunyaEnabled && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
+                      <div className="space-y-2">
+                        <Label>API Key (Master Key)</Label>
+                        <Input
+                          placeholder="pk_test_..."
+                          value={platformConfig?.payment.paydunyaApiKey || ""}
+                          onChange={(e) => updateConfig("payment", "paydunyaApiKey", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Secret Key (Private Key)</Label>
+                        <Input
+                          type="password"
+                          placeholder="sk_test_..."
+                          value={platformConfig?.payment.paydunyaSecretKey || ""}
+                          onChange={(e) => updateConfig("payment", "paydunyaSecretKey", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Webhook Secret</Label>
+                        <Input
+                          type="password"
+                          placeholder="whsec_..."
+                          value={platformConfig?.payment.paydunyaWebhookSecret || ""}
+                          onChange={(e) => updateConfig("payment", "paydunyaWebhookSecret", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Mode</Label>
+                        <Select
+                          value={platformConfig?.payment.paydunyaMode || "sandbox"}
+                          onValueChange={(value) => updateConfig("payment", "paydunyaMode", value)}
+                        >
+                          <SelectContent>
+                            <SelectItem value="sandbox">Sandbox (Test)</SelectItem>
+                            <SelectItem value="live">Production</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          URL Webhook: {platformConfig?.payment.paydunyaMode === "sandbox"
+                            ? "https://app.paydunya.com/sandbox-api"
+                            : "https://app.paydunya.com/api"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
                 <Button
                   onClick={() => handleSaveConfig("payment")}

@@ -77,7 +77,8 @@ const defaultFormData: ProductFormData = {
 
 export default function Products() {
   const { toast } = useToast();
-  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
+  const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const queryClient = useQueryClient();
   
   const [open, setOpen] = useState(false);

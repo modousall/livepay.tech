@@ -34,7 +34,8 @@ const NEXT_STATUS: Record<ServiceInterventionStatus, ServiceInterventionStatus> 
 };
 
 export default function InterventionsPage() {
-  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
+  const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<ServiceIntervention[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});

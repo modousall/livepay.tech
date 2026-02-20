@@ -5,6 +5,12 @@ import express, { type Request, Response, NextFunction } from "express";
 
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
+import {
+  initRateLimiterRedis,
+  cleanupRateLimiter,
+  applyRateLimiters,
+} from "./middleware/rate-limit";
+import { requestLogger, errorLogger, flushLogs } from "./logger";
 
 const app = express();
 const httpServer = createServer(app);
@@ -63,7 +69,19 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize rate limiter with Redis
+  await initRateLimiterRedis();
+
+  // Apply rate limiters to API routes
+  applyRateLimiters(app);
+
+  // Use request logger middleware
+  app.use(requestLogger);
+
   await registerRoutes(httpServer, app);
+
+  // Use error logger middleware
+  app.use(errorLogger);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -89,6 +107,21 @@ app.use((req, res, next) => {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[express] serving on port ${PORT}`);
+  });
+
+  // Graceful shutdown
+  process.on("SIGTERM", async () => {
+    log("Shutting down gracefully...");
+    await flushLogs(2000);
+    await cleanupRateLimiter();
+    process.exit(0);
+  });
+
+  process.on("SIGINT", async () => {
+    log("Shutting down...");
+    await flushLogs(2000);
+    await cleanupRateLimiter();
+    process.exit(0);
   });
 
 })();

@@ -126,7 +126,7 @@ export default function Settings() {
 
   // Fetch vendor config from Firebase
   useEffect(() => {
-    if (!user) return;
+    if (!user || !entityId) return;
 
     const loadConfig = async () => {
       try {
@@ -203,7 +203,7 @@ export default function Settings() {
   };
 
   const handleChatbotSave = async () => {
-    if (!user) return;
+    if (!user || !entityId) return;
     setIsSavingConfig(true);
     try {
       if (vendorConfig) {
@@ -544,6 +544,12 @@ export default function Settings() {
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                     MTN MoMo
+                  </span>
+                </SelectItem>
+                <SelectItem value="paydunya">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    PayDunya (Multi-paiements)
                   </span>
                 </SelectItem>
               </SelectContent>

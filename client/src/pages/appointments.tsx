@@ -28,7 +28,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const STATUS_ORDER: AppointmentStatus[] = ["pending", "confirmed", "completed", "cancelled", "no_show"];
 
 export default function AppointmentsPage() {
-  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
+  const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<Appointment[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});

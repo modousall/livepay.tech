@@ -11,7 +11,12 @@ export type BusinessProfileKey =
   | "transport"
   | "field_services"
   | "rental"
-  | "healthcare_private";
+  | "healthcare_private"
+  // NOUVEAUX: Secteurs pour l'Afrique
+  | "public_services"
+  | "agriculture"
+  | "real_estate"
+  | "legal_notary";
 
 export interface BusinessProfileDefinition {
   key: BusinessProfileKey;
@@ -272,6 +277,59 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
       openWorkLabel: "Patients en attente",
       escalatedLabel: "Cas prioritaires",
       throughputLabel: "Consultations finalisees",
+    },
+  },
+  // NOUVEAUX: Secteurs pour l'Afrique
+  public_services: {
+    key: "public_services",
+    label: "Services Publics / Administration",
+    subtitle: "Démarches administratives",
+    botHint: "Citoyens: envoyez DEMARCHE pour démarrer une démarche administrative.",
+    highlights: ["Guide démarches", "Pièces à fournir", "Suivi dossier"],
+    essentialModules: ["crm_backoffice", "appointments", "queue"],
+    controlTowerLabels: {
+      openWorkLabel: "Dossiers en cours",
+      escalatedLabel: "Dossiers critiques",
+      throughputLabel: "Démarches finalisées",
+    },
+  },
+  agriculture: {
+    key: "agriculture",
+    label: "Agriculture / Élevage",
+    subtitle: "Conseils et financement",
+    botHint: "Agriculteurs: envoyez CONSEIL ou CREDIT pour obtenir de l'aide.",
+    highlights: ["Conseils culturaux", "Météo agricole", "Crédit agricole"],
+    essentialModules: ["crm_backoffice", "products", "appointments"],
+    controlTowerLabels: {
+      openWorkLabel: "Demandes en cours",
+      escalatedLabel: "Urgences climat",
+      throughputLabel: "Dossiers financés",
+    },
+  },
+  real_estate: {
+    key: "real_estate",
+    label: "Immobilier",
+    subtitle: "Location et vente",
+    botHint: "Clients: envoyez LOUER ou VENDRE pour immobilier.",
+    highlights: ["Visites virtuelles", "Gestion locative", "Estimation gratuite"],
+    essentialModules: ["products", "orders", "crm_backoffice"],
+    controlTowerLabels: {
+      openWorkLabel: "Biens disponibles",
+      escalatedLabel: "Litiges locatifs",
+      throughputLabel: "Contrats signés",
+    },
+  },
+  legal_notary: {
+    key: "legal_notary",
+    label: "Justice / Notariat",
+    subtitle: "Services juridiques",
+    botHint: "Clients: envoyez CONSULTATION pour conseil juridique.",
+    highlights: ["Consultation juridique", "Actes notariés", "Successions"],
+    essentialModules: ["appointments", "crm_backoffice"],
+    controlTowerLabels: {
+      openWorkLabel: "Dossiers ouverts",
+      escalatedLabel: "Urgences juridiques",
+      throughputLabel: "Actes finalisés",
     },
   },
 };

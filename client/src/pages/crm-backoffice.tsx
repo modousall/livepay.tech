@@ -35,7 +35,8 @@ const MODULE_OPTIONS: CrmModule[] = [
 ];
 
 export default function CrmBackofficePage() {
-  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
+  const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [tickets, setTickets] = useState<CrmTicket[]>([]);
   const [agents, setAgents] = useState<CrmAgent[]>([]);
@@ -68,7 +69,7 @@ export default function CrmBackofficePage() {
   );
 
   const addAgent = async () => {
-    if (!user || !newAgent.name) return;
+    if (!user || !newAgent.name || !entityId) return;
     await createCrmAgent({
       vendorId: entityId,
       name: newAgent.name,
@@ -96,19 +97,19 @@ export default function CrmBackofficePage() {
 
   const moveTicket = async (ticket: CrmTicket, toStatus: CrmTicketStatus) => {
     if (!entityId) return;
-    await updateCrmTicketStatus(ticket.id, entityId, ticket.status, toStatus, user.email || "vendor");
+    await updateCrmTicketStatus(ticket.id, entityId, ticket.status, toStatus, user?.email || "vendor");
     await load();
   };
 
   const assignTicket = async (ticket: CrmTicket, agentId: string) => {
-    if (!user || !agentId) return;
+    if (!user || !agentId || !entityId) return;
     await assignCrmTicket(ticket.id, entityId, agentId, user.email || "vendor");
     await load();
   };
 
   const escalateNow = async () => {
     if (!entityId) return;
-    const count = await runCrmAutoEscalation(entityId, user.email || "vendor");
+    const count = await runCrmAutoEscalation(entityId, user?.email || "vendor");
     await load();
     toast({ title: "Escalade auto executee", description: `${count} ticket(s) escalade(s)` });
   };

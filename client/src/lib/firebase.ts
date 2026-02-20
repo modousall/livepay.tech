@@ -233,7 +233,9 @@ export async function updateUserProfile(uid: string, data: Partial<UserProfile>)
   const profile = await getUserProfile(uid);
   if (!profile) throw new Error("Erreur mise à jour profil");
   return profile;
-}\r\n\r\nexport function getActiveEntityId(profile: UserProfile | null): string | null {
+}
+
+export function getActiveEntityId(profile: UserProfile | null): string | null {
   if (!profile) return null;
   return profile.entityId || profile.id;
 }
@@ -337,7 +339,8 @@ export interface VendorConfig {
   // Common settings
   status: "active" | "inactive" | "suspended";
   liveMode: boolean;
-  uiMode?: "simplified" | "expert";\r\n  expertModeEnabled?: boolean;
+  uiMode?: "simplified" | "expert";
+  expertModeEnabled?: boolean;
   contextualOnboardingCompletedAt?: Date;
   reservationDurationMinutes: number;
   autoReplyEnabled: boolean;
@@ -524,42 +527,14 @@ export async function deleteProduct(productId: string): Promise<void> {
 }
 
 // ========== ORDERS ==========
-export type OrderStatus = "pending" | "reserved" | "paid" | "shipped" | "delivered" | "expired" | "cancelled";
-export type PaymentMethod = "wave" | "orange_money" | "card" | "cash";
+// Import unified types from shared/types.ts
+import { Order, OrderStatus, PaymentMethod, InsertOrder } from "@shared/types";
 
-export interface Order {
-  id: string;
-  vendorId: string;
-  productId: string;
-  clientId?: string;
-  clientPhone: string;
-  clientName?: string;
-  productName?: string;
-  quantity: number;
-  unitPrice?: number;
-  totalAmount: number;
-  status: OrderStatus;
-  paymentMethod?: PaymentMethod;
-  paymentReference?: string;
-  paymentProof?: string;
-  paymentToken?: string;
-  receiptToken?: string;
-  receiptGeneratedAt?: Date;
-  paymentUrl?: string;
-  pspReference?: string;
-  reservedAt?: Date;
-  reservedUntil?: Date;
-  expiresAt?: Date;
-  paidAt?: Date;
-  notes?: string;
-  deliveryAddress?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type { Order, OrderStatus, PaymentMethod, InsertOrder };
 
 export async function getOrders(vendorId: string): Promise<Order[]> {
   const q = query(
-    collection(db, "orders"), 
+    collection(db, "orders"),
     where("vendorId", "==", vendorId),
     orderBy("createdAt", "desc")
   );
@@ -571,9 +546,10 @@ export async function getOrders(vendorId: string): Promise<Order[]> {
       id: d.id,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
-      reservedUntil: data.reservedUntil?.toDate(),
+      reservedAt: data.reservedAt?.toDate(),
+      expiresAt: data.expiresAt?.toDate(),
       paidAt: data.paidAt?.toDate(),
-    };
+    } as Order;
   }) as Order[];
 }
 
@@ -581,7 +557,8 @@ export async function createOrder(data: Omit<Order, "id" | "createdAt" | "update
   const now = Timestamp.now();
   const docRef = await addDoc(collection(db, "orders"), {
     ...data,
-    reservedUntil: data.reservedUntil ? Timestamp.fromDate(data.reservedUntil) : null,
+    reservedAt: data.reservedAt ? Timestamp.fromDate(data.reservedAt) : null,
+    expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : null,
     paidAt: data.paidAt ? Timestamp.fromDate(data.paidAt) : null,
     createdAt: now,
     updatedAt: now,
@@ -591,14 +568,15 @@ export async function createOrder(data: Omit<Order, "id" | "createdAt" | "update
     id: docRef.id,
     createdAt: now.toDate(),
     updatedAt: now.toDate(),
-  };
+  } as Order;
 }
 
 export async function updateOrder(orderId: string, data: Partial<Order>): Promise<void> {
   const updateData: any = { ...data, updatedAt: Timestamp.now() };
   delete updateData.id;
   delete updateData.createdAt;
-  if (data.reservedUntil) updateData.reservedUntil = Timestamp.fromDate(data.reservedUntil);
+  if (data.reservedAt) updateData.reservedAt = Timestamp.fromDate(data.reservedAt);
+  if (data.expiresAt) updateData.expiresAt = Timestamp.fromDate(data.expiresAt);
   if (data.paidAt) updateData.paidAt = Timestamp.fromDate(data.paidAt);
   await updateDoc(doc(db, "orders", orderId), updateData);
 }
@@ -739,9 +717,9 @@ export async function getOrderByToken(token: string): Promise<Order | null> {
     id: snap.id,
     createdAt: data.createdAt?.toDate() || new Date(),
     updatedAt: data.updatedAt?.toDate() || new Date(),
-    reservedUntil: data.reservedUntil?.toDate(),
+    reservedAt: data.reservedAt?.toDate(),
+    expiresAt: data.expiresAt?.toDate(),
     paidAt: data.paidAt?.toDate(),
-    receiptGeneratedAt: data.receiptGeneratedAt?.toDate(),
   } as Order;
 }
 
@@ -761,9 +739,9 @@ export async function getOrderByReceiptToken(receiptToken: string): Promise<Orde
     id: orderDoc.id,
     createdAt: data.createdAt?.toDate() || new Date(),
     updatedAt: data.updatedAt?.toDate() || new Date(),
-    reservedUntil: data.reservedUntil?.toDate(),
+    reservedAt: data.reservedAt?.toDate(),
+    expiresAt: data.expiresAt?.toDate(),
     paidAt: data.paidAt?.toDate(),
-    receiptGeneratedAt: data.receiptGeneratedAt?.toDate(),
   } as Order;
 }
 
@@ -1682,6 +1660,12 @@ export interface PlatformConfig {
     stripeSecretKey?: string;
     stripeWebhookSecret?: string;
     stripeEnabled: boolean;
+    // PayDunya PSP Configuration
+    paydunyaApiKey?: string;
+    paydunyaSecretKey?: string;
+    paydunyaWebhookSecret?: string;
+    paydunyaEnabled: boolean;
+    paydunyaMode?: "sandbox" | "live";
     testMode: boolean;
   };
   // General Settings
@@ -1717,6 +1701,9 @@ const DEFAULT_PLATFORM_CONFIG: Omit<PlatformConfig, "id" | "updatedAt"> = {
     waveEnabled: false,
     orangeMoneyEnabled: false,
     stripeEnabled: false,
+    // PayDunya
+    paydunyaEnabled: false,
+    paydunyaMode: "sandbox",
     testMode: true,
   },
   general: {

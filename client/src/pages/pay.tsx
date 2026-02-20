@@ -54,6 +54,7 @@ const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
   { id: "mtn_momo", name: "MTN MoMo", description: "Paiement mobile", icon: "mtn" },
   { id: "moov_money", name: "Moov Money", description: "Paiement mobile", icon: "moov" },
   { id: "free_money", name: "Free Money", description: "Paiement mobile", icon: "free" },
+  { id: "paydunya", name: "PayDunya", description: "Paiement en ligne (Mobile Money + Carte)", icon: "card" },
   { id: "cash", name: "Espèces", description: "Main propre", icon: "cash" },
 ];
 
@@ -127,7 +128,7 @@ export default function Pay() {
         const vendorConfig = await getVendorConfig(orderData.vendorId);
 
         // Calculate expiration
-        const expiresAt = orderData.reservedUntil ||
+        const expiresAt = orderData.expiresAt ||
           new Date(orderData.createdAt.getTime() + 30 * 60 * 1000); // 30 min default
 
         // Build vendor name from profile or config
@@ -265,6 +266,14 @@ export default function Pay() {
         result.instructions += `\n\nNuméro: ${invoice?.vendorPhone || "Non disponible"}`;
       } else if (selectedMethod === "card") {
         result.instructions = "Le paiement par carte sera disponible bientôt";
+      } else if (selectedMethod === "paydunya") {
+        result.instructions = "Vous allez être redirigé vers la plateforme de paiement sécurisée PayDunya";
+        result.instructions += `\n\nMoyens acceptés: Wave, Orange Money, Free Money, MTN MoMo, Cartes bancaires`;
+        // Redirection vers le checkout PayDunya
+        const paydunyaBaseUrl = process.env.NODE_ENV === "production"
+          ? "https://paydunya.com/checkout"
+          : "https://paydunya.com/sandbox-checkout";
+        result.deepLink = `${paydunyaBaseUrl}/${token}`;
       }
 
       setPaymentResult(result);

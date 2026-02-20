@@ -25,7 +25,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function QueueManagementPage() {
-  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
+  const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<QueueTicket[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});
