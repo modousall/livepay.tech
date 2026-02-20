@@ -256,7 +256,7 @@ export default function Landing() {
                       </li>
                     ))}
                   </ul>
-                  <a href="/login">
+                  <a href="mailto:contact@livepay.tech?subject=Demander%20accès%20LIVE%20TECH">
                     <Button
                       className="w-full"
                       variant={plan.popular ? "default" : "outline"}
@@ -305,7 +305,7 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#pricing" className="hover:text-foreground">Tarifs</a></li>
                 <li><a href="/login" className="hover:text-foreground">Connexion</a></li>
-                <li><a href="mailto:contact@livepay.tech" className="hover:text-foreground">Demander une démo</a></li>
+                <li><a href="mailto:contact@livepay.tech" className="hover:text-foreground">Demander un accès</a></li>
               </ul>
             </div>
 

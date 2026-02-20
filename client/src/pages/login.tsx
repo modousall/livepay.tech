@@ -117,12 +117,26 @@ export default function Login() {
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Pas encore de compte ? </span>
-            <a href="/register" className="text-primary hover:underline font-medium">
-              Créer un compte
+            <a href="mailto:contact@livepay.tech?subject=Demande%20d%27acc%C3%A8s%20LIVE%20TECH" className="text-primary hover:underline font-medium">
+              Demander un accès
             </a>
           </div>
         </Card>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t py-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground">
+          <p>&copy; 2026 LIVE TECH. Tous droits réservés.</p>
+          <div className="flex justify-center gap-4 mt-2">
+            <a href="/privacy" className="hover:text-foreground transition-colors">Confidentialité</a>
+            <span>•</span>
+            <a href="/terms" className="hover:text-foreground transition-colors">CGU</a>
+            <span>•</span>
+            <a href="mailto:contact@livepay.tech" className="hover:text-foreground transition-colors">Contact</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
