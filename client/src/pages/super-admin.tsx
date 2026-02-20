@@ -1556,11 +1556,40 @@ function CreateEntityDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.businessName || !formData.adminEmail || !formData.adminPassword) {
+
+    // Validations
+    const errors: string[] = [];
+
+    if (!formData.businessName.trim()) {
+      errors.push("Le nom de l'entreprise est requis");
+    }
+
+    if (!formData.adminEmail.trim()) {
+      errors.push("L'email de l'administrateur est requis");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.adminEmail)) {
+      errors.push("L'email n'est pas valide");
+    }
+
+    if (!formData.adminPassword) {
+      errors.push("Le mot de passe est requis");
+    } else if (formData.adminPassword.length < 6) {
+      errors.push("Le mot de passe doit contenir au moins 6 caractères");
+    }
+
+    if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
+      errors.push("Le numéro de téléphone n'est pas valide");
+    }
+
+    if (errors.length > 0) {
       toast({
-        title: "Champs requis",
-        description: "Veuillez remplir au moins le nom, l'email et le mot de passe",
+        title: "Erreur de validation",
+        description: (
+          <ul className="list-disc list-inside mt-2">
+            {errors.map((error, i) => (
+              <li key={i}>{error}</li>
+            ))}
+          </ul>
+        ),
         variant: "destructive",
       });
       return;
@@ -1568,7 +1597,7 @@ function CreateEntityDialog({
 
     try {
       setIsCreating(true);
-      
+
       // Create entity
       const result = await createEntityWithAdmin({
         businessName: formData.businessName,
@@ -1607,10 +1636,10 @@ function CreateEntityDialog({
         phone: "",
         sector: "shop",
       });
-      
+
       // Reload page to update stats
       window.location.reload();
-      
+
     } catch (error: any) {
       console.error("Error creating entity:", error);
       toast({
