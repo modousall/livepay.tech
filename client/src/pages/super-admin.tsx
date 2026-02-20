@@ -216,18 +216,22 @@ export default function SuperAdmin() {
       maximumFractionDigits: 0,
     }).format(amount);
   };
-  
+
+  // Filter out super admin from vendors list
   const filteredVendors = vendors.filter((v) =>
-    v.businessName?.toLowerCase().includes(searchVendor.toLowerCase()) ||
-    v.email?.toLowerCase().includes(searchVendor.toLowerCase()) ||
-    v.firstName?.toLowerCase().includes(searchVendor.toLowerCase())
+    v.role !== "superadmin" && (
+      v.businessName?.toLowerCase().includes(searchVendor.toLowerCase()) ||
+      v.email?.toLowerCase().includes(searchVendor.toLowerCase()) ||
+      v.firstName?.toLowerCase().includes(searchVendor.toLowerCase())
+    )
   );
-  
+
   const filteredOrders = orders.filter((o) =>
     o.clientPhone?.toLowerCase().includes(searchOrder.toLowerCase()) ||
     o.productName?.toLowerCase().includes(searchOrder.toLowerCase())
   );
-  
+
+  // Filter users for user management (include super admins for display)
   const filteredUsers = vendors.filter((v) =>
     v.businessName?.toLowerCase().includes(searchUser.toLowerCase()) ||
     v.email?.toLowerCase().includes(searchUser.toLowerCase()) ||

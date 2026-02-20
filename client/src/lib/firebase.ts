@@ -81,25 +81,26 @@ export async function loginWithEmail(email: string, password: string): Promise<U
   
   // Determine role - check if super admin
   const determinedRole = isSuperAdmin(email) ? "superadmin" : "vendor";
-  
+
   // If profile doesn't exist in Firestore, create it (migration from Auth only)
   if (!profile) {
     if (!isSuperAdmin(email)) {
       await signOut(auth);
       throw new Error("Compte non autorise. Contactez le super administrateur.");
     }
-    console.log("Creating missing user profile in Firestore...");
+    console.log("Creating missing super admin profile in Firestore...");
     const displayName = user.displayName || email.split('@')[0];
     const nameParts = displayName.split(' ');
-    
+
+    // Super admin does NOT need an entity or phone
     profile = {
       id: user.uid,
       email: user.email || email.toLowerCase(),
       firstName: nameParts[0] || '',
       lastName: nameParts.slice(1).join(' ') || '',
       role: determinedRole,
-      entityId: user.uid,
-      entityRole: "owner",
+      entityId: undefined, // Super admin has NO entity
+      entityRole: undefined, // Super admin has NO entity role
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -112,9 +113,16 @@ export async function loginWithEmail(email: string, password: string): Promise<U
   } else if (isSuperAdmin(email) && profile.role !== "superadmin") {
     // Update role if user is a super admin but profile doesn't reflect it
     profile.role = "superadmin";
-    await updateDoc(doc(db, "users", user.uid), { role: "superadmin" });
+    // Remove entity association for super admin
+    profile.entityId = undefined;
+    profile.entityRole = undefined;
+    await updateDoc(doc(db, "users", user.uid), { 
+      role: "superadmin",
+      entityId: null,
+      entityRole: null,
+    });
   }
-  
+
   return {
     ...profile,
     entityId: profile.entityId || profile.id,
