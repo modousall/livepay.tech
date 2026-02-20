@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Phone, Clock, CheckCircle, XCircle, AlertCircle, MessageCircle, Download, Truck, Eye } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, AlertCircle, Truck, ChevronDown, ChevronUp, MapPin, Send } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,17 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { InitiateChatDialog } from "@/components/initiate-chat-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { getOrders, getProducts, updateOrder, type Order, type Product } from "@/lib/firebase";
 import { exportOrdersToCSV } from "@/lib/export-utils";
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: "En attente", color: "bg-yellow-500", icon: Clock },
-  reserved: { label: "Réservé", color: "bg-blue-500", icon: AlertCircle },
-  paid: { label: "Payé", color: "bg-green-500", icon: CheckCircle },
-  shipped: { label: "Expédié", color: "bg-purple-500", icon: Truck },
+const statusConfig: Record<string, { label: string; color: string; icon: any; nextAction?: string }> = {
+  pending: { label: "En attente", color: "bg-yellow-500", icon: Clock, nextAction: "paid" },
+  reserved: { label: "Réservé", color: "bg-blue-500", icon: AlertCircle, nextAction: "paid" },
+  paid: { label: "Payé", color: "bg-green-500", icon: CheckCircle, nextAction: "shipped" },
+  shipped: { label: "En livraison", color: "bg-purple-500", icon: Truck, nextAction: "delivered" },
   delivered: { label: "Livré", color: "bg-indigo-500", icon: CheckCircle },
   expired: { label: "Expiré", color: "bg-gray-500", icon: XCircle },
   cancelled: { label: "Annulé", color: "bg-red-500", icon: XCircle },
@@ -37,17 +36,16 @@ export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Action dialogs
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [showActionDialog, setShowActionDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showShipDialog, setShowShipDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [gpsEnabled, setGpsEnabled] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (!entityId) return;
-    
+
     const loadData = async () => {
       try {
         setIsLoading(true);
@@ -55,7 +53,10 @@ export default function Orders() {
           getOrders(entityId),
           getProducts(entityId),
         ]);
-        setOrders(ordersData);
+        
+        // ✅ CORRECTION: Supprimer les doublons par client + produit
+        const uniqueOrders = removeDuplicateOrders(ordersData);
+        setOrders(uniqueOrders);
         setProducts(productsData);
       } catch (error) {
         console.error("Error loading orders:", error);
@@ -64,45 +65,103 @@ export default function Orders() {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, [entityId, toast]);
 
-  // Update order status
-  const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
-    if (!user) return;
+  // ✅ CORRECTION: Fonction pour supprimer les doublons
+  const removeDuplicateOrders = (ordersList: Order[]): Order[] => {
+    const uniqueMap = new Map<string, Order>();
+    
+    ordersList.forEach(order => {
+      // Clé unique: client + produit + statut (pour éviter les vrais doublons)
+      const key = `${order.clientPhone}-${order.productId}-${order.status}`;
+      
+      // Garder seulement la première occurrence ou la plus récente
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, order);
+      }
+    });
+    
+    return Array.from(uniqueMap.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  };
+
+  const getProductName = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product?.name || "Produit";
+  };
+
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // ✅ INNOVATION: Obtenir la position GPS
+  const getCurrentPosition = () => {
+    return new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Géolocalisation non supportée"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          reject(error);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  };
+
+  // ✅ INNOVATION: Action unique intelligente selon le statut
+  const handleSmartAction = async () => {
+    if (!selectedOrder || !user) return;
+
+    const currentStatus = selectedOrder.status;
+    const nextStatus = statusConfig[currentStatus]?.nextAction;
+
+    if (!nextStatus) {
+      toast({ title: "Action non disponible", description: "Cette commande est terminée", variant: "default" });
+      return;
+    }
 
     try {
       setIsUpdating(true);
-      await updateOrder(orderId, { status: newStatus });
+      await updateOrder(selectedOrder.id, { status: nextStatus });
 
       // Update local state
       setOrders(orders.map(o =>
-        o.id === orderId ? { ...o, status: newStatus } : o
+        o.id === selectedOrder.id ? { ...o, status: nextStatus } : o
       ));
 
-      // ✅ NOTIFIER LE CLIENT PAR WHATSAPP
-      if (newStatus === "paid") {
-        const order = orders.find(o => o.id === orderId);
-        if (order) {
-          const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
-          const message = `✅ *Paiement Confirmé !*\n\nBonjour ${order.clientName || "Cher client"},\n\nVotre commande #${orderId} a été *payée avec succès*.\n\n📦 Produit: ${getProductName(order.productId)}\n💰 Montant: ${formatPrice(order.totalAmount)}\n\nMerci pour votre confiance !`;
-          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-          
-          // Ouvrir WhatsApp pour envoyer la notification
-          window.open(whatsappUrl, "_blank");
-          
-          toast({
-            title: "Paiement confirmé",
-            description: "La notification WhatsApp a été ouverte. Envoyez le message au client.",
-          });
-        }
-      } else {
-        toast({
-          title: "Commande mise à jour",
-          description: `La commande est maintenant ${statusConfig[newStatus].label}`,
-        });
+      // ✅ INNOVATION: Notification GPS automatique pour livraison
+      if (nextStatus === "shipped") {
+        await sendGPSNotification(selectedOrder);
       }
+
+      toast({
+        title: "Commande mise à jour",
+        description: `La commande est maintenant ${statusConfig[nextStatus].label}`,
+      });
+
+      setShowActionDialog(false);
+      setSelectedOrder(null);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -111,25 +170,56 @@ export default function Orders() {
       });
     } finally {
       setIsUpdating(false);
-      setShowConfirmDialog(false);
-      setShowCancelDialog(false);
-      setShowShipDialog(false);
-      setSelectedOrder(null);
     }
   };
 
-  // Calculate stats from orders
+  // ✅ INNOVATION: Envoyer notification GPS au client
+  const sendGPSNotification = async (order: Order) => {
+    try {
+      // Obtenir position GPS
+      const position = await getCurrentPosition();
+      setGpsCoords(position);
+      setGpsEnabled(true);
+
+      const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
+      const googleMapsLink = `https://www.google.com/maps?q=${position.lat},${position.lng}`;
+      
+      const message = `🚚 *Livraison en cours !*\n\nBonjour ${order.clientName || "Cher client"},\n\nVotre commande #${order.id} est *en route de livraison*.\n\n📦 Produit: ${getProductName(order.productId)}\n💰 Montant: ${formatPrice(order.totalAmount)}\n\n📍 *Position du livreur:*\n${googleMapsLink}\n\n🕐 Temps estimé: 15-30 minutes\n\nRestez disponible !`;
+
+      const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, "_blank");
+
+      toast({
+        title: "Livraison démarrée",
+        description: "Position GPS envoyée au client",
+      });
+    } catch (error) {
+      console.error("GPS error:", error);
+      // Fallback sans GPS
+      const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
+      const message = `🚚 *Livraison en cours !*\n\nVotre commande #${order.id} est en route. Restez disponible !`;
+      const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, "_blank");
+    }
+  };
+
+  const openActionDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setShowActionDialog(true);
+  };
+
+  const toggleOrderExpand = (orderId: string) => {
+    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+  };
+
   const stats = {
     pending: orders.filter(o => o.status === "pending").length,
     reserved: orders.filter(o => o.status === "reserved").length,
     paid: orders.filter(o => o.status === "paid").length,
+    shipped: orders.filter(o => o.status === "shipped").length,
+    delivered: orders.filter(o => o.status === "delivered").length,
     expired: orders.filter(o => o.status === "expired").length,
-    totalRevenue: orders.filter(o => o.status === "paid").reduce((sum, o) => sum + o.totalAmount, 0),
-  };
-
-  const getProductName = (productId: string) => {
-    const product = products.find(p => p.id === productId);
-    return product?.name || "Produit";
+    totalRevenue: orders.filter(o => o.status === "paid" || o.status === "delivered").reduce((sum, o) => sum + o.totalAmount, 0),
   };
 
   if (isLoading) {
@@ -146,54 +236,42 @@ export default function Orders() {
     );
   }
 
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Ventes</h1>
-          <p className="text-muted-foreground">Suivi des Ventes WhatsApp</p>
+          <p className="text-muted-foreground">Suivi des Ventes WhatsApp en temps réel</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            className="gap-2"
-            onClick={() => exportOrdersToCSV(orders)}
-            disabled={orders.length === 0}
-          >
-            <Download className="w-4 h-4" />
-            Exporter CSV
-          </Button>
-          <InitiateChatDialog
-            trigger={
-              <Button className="gap-2 bg-green-600 hover:bg-green-700">
-                <MessageCircle className="w-4 h-4" />
-                Contacter un client
-              </Button>
-            }
-          />
-        </div>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => exportOrdersToCSV(orders)}
+          disabled={orders.length === 0}
+        >
+          <Package className="w-4 h-4" />
+          Exporter CSV
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">En attente</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
+              </div>
+              <Clock className="h-8 w-8 text-blue-500 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Réservées</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.reserved}</p>
               </div>
               <AlertCircle className="h-8 w-8 text-blue-500 opacity-50" />
@@ -215,10 +293,10 @@ export default function Orders() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Expirées</p>
-                <p className="text-2xl font-bold text-gray-600">{stats.expired}</p>
+                <p className="text-sm text-muted-foreground">Livraison</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.shipped}</p>
               </div>
-              <XCircle className="h-8 w-8 text-gray-400 opacity-50" />
+              <Truck className="h-8 w-8 text-purple-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -227,7 +305,7 @@ export default function Orders() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Revenu total</p>
-                <p className="text-xl font-bold text-green-600">
+                <p className="text-lg font-bold text-green-600">
                   {formatPrice(stats.totalRevenue)}
                 </p>
               </div>
@@ -237,10 +315,10 @@ export default function Orders() {
         </Card>
       </div>
 
-      {/* Orders List */}
+      {/* ✅ INNOVATION: Accordion Orders List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Historique des Ventes</CardTitle>
+          <CardTitle className="text-lg">Historique des Ventes ({orders.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {orders.length === 0 ? (
@@ -250,113 +328,101 @@ export default function Orders() {
               <p className="text-sm mt-2">Les Ventes WhatsApp apparaîtront ici</p>
             </div>
           ) : (
-            <ScrollArea className="h-[500px]">
-              <div className="space-y-3">
-                {orders.map((order) => {
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-2">
+                {orders.map((order, index) => {
                   const config = statusConfig[order.status];
                   const StatusIcon = config.icon;
                   const productName = getProductName(order.productId);
+                  const isExpanded = expandedOrderId === order.id;
+                  const nextAction = config.nextAction;
+
                   return (
                     <div
                       key={order.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      className={`rounded-lg border bg-card transition-all ${
+                        isExpanded ? "border-primary shadow-md" : "hover:bg-muted/50"
+                      }`}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`p-2 rounded-full ${config.color} bg-opacity-20`}>
-                          <StatusIcon className={`h-5 w-5 ${config.color.replace('bg-', 'text-')}`} />
+                      {/* Header - Always visible */}
+                      <div
+                        className="flex items-center justify-between p-4 cursor-pointer"
+                        onClick={() => toggleOrderExpand(order.id)}
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`p-2 rounded-full ${config.color} bg-opacity-20`}>
+                            <StatusIcon className={`h-4 w-4 ${config.color.replace('bg-', 'text-')}`} />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{productName}</span>
+                              <Badge variant="outline" className="text-xs">x{order.quantity}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {order.clientName || order.clientPhone}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{productName}</span>
-                            <Badge variant="outline">x{order.quantity}</Badge>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                            <Phone className="h-3 w-3" />
-                            <span>{order.clientName || order.clientPhone}</span>
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <Badge
+                            variant={order.status === "paid" || order.status === "delivered" ? "default" : "secondary"}
+                            className={order.status === "paid" || order.status === "delivered" ? "bg-green-600" : ""}
+                          >
+                            {config.label}
+                          </Badge>
+                          <span className="font-semibold text-sm">{formatPrice(order.totalAmount)}</span>
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </div>
                       </div>
-                      <div className="text-right flex items-center gap-3">
-                        {/* Action buttons based on status */}
-                        {order.status === "reserved" && (
-                          <>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setShowConfirmDialog(true);
-                              }}
-                              title="Confirmer le paiement"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setShowShipDialog(true);
-                              }}
-                              title="Marquer comme expédié"
-                            >
-                              <Truck className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
-                        {order.status === "paid" && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setShowShipDialog(true);
-                            }}
-                            title="Marquer comme expédié"
-                          >
-                            <Truck className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {(order.status === "reserved" || order.status === "pending") && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setShowCancelDialog(true);
-                            }}
-                            title="Annuler la commande"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <InitiateChatDialog
-                          defaultPhone={order.clientPhone}
-                          trigger={
-                            <Button size="sm" variant="ghost" className="text-green-600 hover:text-green-700 hover:bg-green-50" title="Contacter le client">
-                              <MessageCircle className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
-                        <div>
-                          <p className="font-semibold">{formatPrice(order.totalAmount)}</p>
-                          <div className="flex items-center gap-2 justify-end mt-1">
-                            <Badge
-                              variant={order.status === "paid" ? "default" : "secondary"}
-                              className={order.status === "paid" ? "bg-green-600" : ""}
-                            >
-                              {config.label}
-                            </Badge>
+
+                      {/* Expanded Content */}
+                      {isExpanded && (
+                        <div className="border-t p-4 bg-muted/30 space-y-3">
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Client</p>
+                              <p className="font-medium">{order.clientName || "Client"}</p>
+                              <p className="text-xs text-muted-foreground">{order.clientPhone}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Commande</p>
+                              <p className="font-medium">#{order.id}</p>
+                              <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatDate(order.createdAt)}
-                          </p>
+
+                          {/* ✅ BOUTON UNIQUE INTELLIGENT */}
+                          {nextAction && (
+                            <Button
+                              className="w-full gap-2"
+                              size="lg"
+                              onClick={() => openActionDialog(order)}
+                              disabled={isUpdating}
+                            >
+                              {nextAction === "paid" && <CheckCircle className="w-4 h-4" />}
+                              {nextAction === "shipped" && <Truck className="w-4 h-4" />}
+                              {nextAction === "delivered" && <MapPin className="w-4 h-4" />}
+                              {isUpdating ? "Traitement..." : (
+                                <>
+                                  {nextAction === "paid" && "✅ Valider le paiement"}
+                                  {nextAction === "shipped" && "🚚 Démarrer livraison (GPS)"}
+                                  {nextAction === "delivered" && "📍 Confirmer livraison"}
+                                </>
+                              )}
+                            </Button>
+                          )}
+
+                          {!nextAction && (
+                            <p className="text-center text-sm text-muted-foreground">
+                              {order.status === "delivered" ? "✅ Commande terminée" : "⚠️ Commande annulée/expirée"}
+                            </p>
+                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
@@ -366,88 +432,66 @@ export default function Orders() {
         </CardContent>
       </Card>
 
-      {/* Confirm Payment Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      {/* Smart Action Dialog */}
+      <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmer le paiement</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedOrder && statusConfig[selectedOrder.status].nextAction === "paid" && <CheckCircle className="w-5 h-5 text-green-600" />}
+              {selectedOrder && statusConfig[selectedOrder.status].nextAction === "shipped" && <Truck className="w-5 h-5 text-purple-600" />}
+              {selectedOrder && statusConfig[selectedOrder.status].nextAction === "delivered" && <MapPin className="w-5 h-5 text-blue-600" />}
+              {selectedOrder && selectedOrder.status === "reserved" && "Valider le paiement"}
+              {selectedOrder && selectedOrder.status === "paid" && "Démarrer la livraison"}
+              {selectedOrder && selectedOrder.status === "shipped" && "Confirmer livraison"}
+            </DialogTitle>
             <DialogDescription>
               {selectedOrder && `Commande #${selectedOrder.id} - ${getProductName(selectedOrder.productId)}`}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm">
-              Êtes-vous sûr d'avoir reçu le paiement de <strong>{selectedOrder && formatPrice(selectedOrder.totalAmount)}</strong> ?
-            </p>
+          <div className="py-4 space-y-3">
+            {selectedOrder && selectedOrder.status === "reserved" && (
+              <p className="text-sm">
+                Confirmez-vous avoir reçu le paiement de <strong>{formatPrice(selectedOrder.totalAmount)}</strong> ?
+              </p>
+            )}
+            {selectedOrder && selectedOrder.status === "paid" && (
+              <div className="space-y-2">
+                <p className="text-sm">
+                  🚚 La livraison va démarrer. Votre position GPS sera envoyée au client.
+                </p>
+                {gpsEnabled && gpsCoords && (
+                  <p className="text-xs text-muted-foreground">
+                    📍 Position: {gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}
+                  </p>
+                )}
+              </div>
+            )}
+            {selectedOrder && selectedOrder.status === "shipped" && (
+              <p className="text-sm">
+                Confirmez-vous que la commande a été livrée au client ?
+              </p>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)} disabled={isUpdating}>
+            <Button variant="outline" onClick={() => setShowActionDialog(false)} disabled={isUpdating}>
               Annuler
             </Button>
-            <Button 
-              onClick={() => selectedOrder && handleUpdateStatus(selectedOrder.id, "paid")} 
+            <Button
+              onClick={handleSmartAction}
               disabled={isUpdating}
-              className="bg-green-600 hover:bg-green-700"
+              className={
+                selectedOrder?.status === "reserved" ? "bg-green-600 hover:bg-green-700" :
+                selectedOrder?.status === "paid" ? "bg-purple-600 hover:bg-purple-700" :
+                "bg-blue-600 hover:bg-blue-700"
+              }
             >
-              {isUpdating ? "Traitement..." : "✅ Confirmer"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Cancel Order Dialog */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Annuler la commande</DialogTitle>
-            <DialogDescription>
-              {selectedOrder && `Commande #${selectedOrder.id} - ${getProductName(selectedOrder.productId)}`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-red-600">
-              ⚠️ Cette action est irréversible. Le stock sera libéré.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)} disabled={isUpdating}>
-              Retour
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => selectedOrder && handleUpdateStatus(selectedOrder.id, "cancelled")} 
-              disabled={isUpdating}
-            >
-              {isUpdating ? "Traitement..." : "❌ Annuler"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Ship Order Dialog */}
-      <Dialog open={showShipDialog} onOpenChange={setShowShipDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Marquer comme expédié</DialogTitle>
-            <DialogDescription>
-              {selectedOrder && `Commande #${selectedOrder.id} - ${getProductName(selectedOrder.productId)}`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm">
-              La commande est prête à être livrée au client.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowShipDialog(false)} disabled={isUpdating}>
-              Annuler
-            </Button>
-            <Button 
-              onClick={() => selectedOrder && handleUpdateStatus(selectedOrder.id, "paid")} 
-              disabled={isUpdating}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isUpdating ? "Traitement..." : "🚚 Expédier"}
+              {isUpdating ? "Traitement..." : (
+                <>
+                  {selectedOrder?.status === "reserved" && "✅ Confirmer"}
+                  {selectedOrder?.status === "paid" && "🚚 Livrer"}
+                  {selectedOrder?.status === "shipped" && "📍 Confirmer"}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -455,4 +499,3 @@ export default function Orders() {
     </div>
   );
 }
-
