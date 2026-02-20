@@ -34,7 +34,7 @@ const personaNavMap: Record<PersonaModuleId, { title: string; url: string; icon:
   queue: { title: "File d'attente", url: "/modules/queue", icon: Layers },
   ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: Layers },
   interventions: { title: "Interventions", url: "/modules/interventions", icon: Layers },
-  crm_backoffice: { title: "Centre CRM", url: "/modules/crm-backoffice", icon: Headset },
+  // CRM removed - it's now integrated into WhatsApp interactions, not a separate menu
 };
 
 const adminItems = [{ title: "Admin", url: "/admin", icon: Shield }];
@@ -46,7 +46,7 @@ const allModuleIds: PersonaModuleId[] = [
   "queue",
   "ticketing",
   "interventions",
-  "crm_backoffice",
+  // crm_backoffice removed - CRM is now integrated into WhatsApp interactions
 ];
 
 export function AppSidebar() {

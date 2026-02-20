@@ -227,19 +227,24 @@ export async function applySectorDefaults(vendorId: string, segment: string): Pr
  */
 export function getEnabledModulesForSegment(segment: string): string[] {
   const modules: Record<string, string[]> = {
-    banking_microfinance: ["crm_backoffice", "appointments", "queue_management", "products"],
-    insurance: ["crm_backoffice", "interventions", "appointments", "products"],
-    telecom: ["crm_backoffice", "interventions", "queue_management", "products", "orders"],
-    utilities: ["crm_backoffice", "interventions", "queue_management", "products"],
-    healthcare_private: ["appointments", "crm_backoffice", "products"],
+    banking_microfinance: ["appointments", "queue_management", "products"],
+    insurance: ["interventions", "appointments", "products"],
+    telecom: ["interventions", "queue_management", "products", "orders"],
+    utilities: ["interventions", "queue_management", "products"],
+    healthcare_private: ["appointments", "products"],
     transport: ["queue_management", "ticketing", "products"],
     rental: ["products", "orders", "appointments"],
     education: ["appointments", "products", "ticketing"],
-    shop: ["products", "orders", "crm_backoffice"],
+    shop: ["products", "orders"],
     events: ["ticketing", "products"],
-    appointments: ["appointments", "crm_backoffice"],
-    queue_management: ["queue_management", "crm_backoffice"],
-    field_services: ["interventions", "crm_backoffice"],
+    appointments: ["appointments"],
+    queue_management: ["queue_management"],
+    field_services: ["interventions", "appointments"],
+    // NOUVEAUX secteurs Afrique
+    agriculture: ["products", "appointments"],
+    public_services: ["appointments", "queue"],
+    real_estate: ["products", "orders"],
+    legal_notary: ["appointments"],
   };
 
   return modules[segment] || modules.shop;
