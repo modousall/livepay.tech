@@ -1,0 +1,15 @@
+# Files to ignore for ESLint
+node_modules
+dist
+build
+.next
+.nuxt
+coverage
+.firebase
+functions/lib
+functions/node_modules
+*.config.js
+*.config.ts
+.env*
+public
+uploads

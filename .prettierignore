@@ -1,0 +1,26 @@
+# Files to ignore for Prettier
+node_modules
+dist
+build
+.next
+.nuxt
+coverage
+.firebase
+functions/lib
+functions/node_modules
+.env*
+.git
+
+# Dependencies
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Local files
+*.local.*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
