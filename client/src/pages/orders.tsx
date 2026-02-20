@@ -176,15 +176,19 @@ export default function Orders() {
   // ✅ INNOVATION: Envoyer notification GPS au client
   const sendGPSNotification = async (order: Order) => {
     try {
-      // Obtenir position GPS
+      // Obtenir position GPS actuelle
       const position = await getCurrentPosition();
       setGpsCoords(position);
       setGpsEnabled(true);
 
-      const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
-      const googleMapsLink = `https://www.google.com/maps?q=${position.lat},${position.lng}`;
+      // Récupérer la position Google Maps configurée par l'entité
+      const vendorCfg = await getVendorConfig(entityId);
+      const mapsLink = vendorCfg?.googleMapsPosition || `https://www.google.com/maps?q=${position.lat.toFixed(6)},${position.lng.toFixed(6)}`;
       
-      const message = `🚚 *Livraison en cours !*\n\nBonjour ${order.clientName || "Cher client"},\n\nVotre commande #${order.id} est *en route de livraison*.\n\n📦 Produit: ${getProductName(order.productId)}\n💰 Montant: ${formatPrice(order.totalAmount)}\n\n📍 *Position du livreur:*\n${googleMapsLink}\n\n🕐 Temps estimé: 15-30 minutes\n\nRestez disponible !`;
+      const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
+      
+      // ✅ Message OPTIMISÉ - Court et efficace
+      const message = `🚚 *Livraison en cours !*\n\nVotre commande #${order.id} est en route.\n\n📍 Suivez le livreur:\n${mapsLink}\n\n🕐 15-30 min`;
 
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, "_blank");

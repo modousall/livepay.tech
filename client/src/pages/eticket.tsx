@@ -151,8 +151,8 @@ export default function ETicketPage() {
     try {
       // Generate image
       const canvas = document.createElement("canvas");
-      canvas.width = 1080;
-      canvas.height = 1520;
+      canvas.width = 800;
+      canvas.height = 1000;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
@@ -161,101 +161,96 @@ export default function ETicketPage() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = "#111827";
-      ctx.font = "bold 54px sans-serif";
-      ctx.fillText("E-TICKET / RECU", 60, 90);
+      ctx.font = "bold 40px sans-serif";
+      ctx.fillText("E-TICKET / RECU", 40, 60);
 
-      ctx.font = "32px sans-serif";
+      ctx.font = "24px sans-serif";
       ctx.fillStyle = "#374151";
-      ctx.fillText(`Commande: #${order.id}`, 60, 150);
-      ctx.fillText(`Date: ${ticketDate}`, 60, 198);
+      ctx.fillText(`Commande: #${order.id}`, 40, 100);
+      ctx.fillText(`Date: ${ticketDate}`, 40, 130);
 
-      let y = 280;
+      let y = 180;
       if (product?.imageUrl) {
         const img = await loadImage(product.imageUrl);
         if (img) {
-          ctx.drawImage(img, 60, y, 300, 300);
+          ctx.drawImage(img, 40, y, 200, 200);
         }
       }
 
       ctx.fillStyle = "#111827";
-      ctx.font = "bold 40px sans-serif";
-      ctx.fillText(order.productName || product.name || "Produit", 390, y + 60);
-      ctx.font = "30px sans-serif";
+      ctx.font = "bold 30px sans-serif";
+      ctx.fillText(order.productName || product.name || "Produit", 260, y + 40);
+      ctx.font = "22px sans-serif";
       ctx.fillStyle = "#374151";
-      ctx.fillText(`Code: ${product.keyword || "-"}`, 390, y + 110);
-      ctx.fillText(`Quantite: ${order.quantity}`, 390, y + 160);
-      ctx.fillText(`Montant: ${formatAmount(order.totalAmount)}`, 390, y + 210);
+      ctx.fillText(`Code: ${product.keyword || "-"}`, 260, y + 80);
+      ctx.fillText(`Quantite: ${order.quantity}`, 260, y + 115);
+      ctx.fillText(`Montant: ${formatAmount(order.totalAmount)}`, 260, y + 150);
 
-      y = 690;
+      y = 480;
       ctx.fillStyle = "#111827";
-      ctx.font = "bold 34px sans-serif";
-      ctx.fillText("Infos entite", 60, y);
-      ctx.font = "30px sans-serif";
+      ctx.font = "bold 26px sans-serif";
+      ctx.fillText("Infos entite", 40, y);
+      ctx.font = "22px sans-serif";
       ctx.fillStyle = "#374151";
-      ctx.fillText(vendorName, 60, y + 52);
-      ctx.fillText(vendor?.phone || "-", 60, y + 98);
+      ctx.fillText(vendorName, 40, y + 40);
+      ctx.fillText(vendor?.phone || "-", 40, y + 70);
 
       ctx.fillStyle = "#111827";
-      ctx.font = "bold 34px sans-serif";
-      ctx.fillText("Statut: PAYE", 60, y + 190);
-      ctx.font = "24px monospace";
+      ctx.font = "bold 26px sans-serif";
+      ctx.fillText("Statut: PAYE", 40, y + 130);
+      ctx.font = "18px monospace";
       ctx.fillStyle = "#1f2937";
-      ctx.fillText(`Recu genere le ${ticketDate}`, 60, y + 234);
+      ctx.fillText(`Recu genere le ${ticketDate}`, 40, y + 160);
 
       ctx.fillStyle = "#6b7280";
-      ctx.font = "24px sans-serif";
-      ctx.fillText("Document genere automatiquement par LivePay.", 60, 1450);
+      ctx.font = "18px sans-serif";
+      ctx.fillText("Document genere automatiquement par LivePay.", 40, 950);
 
-      // Convert to blob
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => resolve(b!), "image/png");
-      });
+      // Convert to blob and download
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
 
-      // Create file
-      const file = new File([blob], `eticket-${order.id}.png`, { type: "image/png" });
+        const file = new File([blob], `eticket-${order.id}.png`, { type: "image/png" });
 
-      // Share via Web Share API (if supported)
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: "E-Ticket",
-          text: `Votre e-ticket pour ${order.productName}`,
-          files: [file],
+        // Web Share API (mobile)
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: "E-Ticket",
+              text: `Votre e-ticket pour ${order.productName}`,
+              files: [file],
+            });
+            toast({ title: "Ticket envoyé", description: "Partage réussi" });
+          } catch (err) {
+            console.error("Share error:", err);
+          }
+        } else {
+          // Desktop fallback - download + WhatsApp
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png");
+          link.download = `eticket-${order.id}.png`;
+          link.click();
+
+          // WhatsApp with short message
+          const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
+          const message = `🎫 *E-Ticket*\n\nCommande: #${order.id}\nProduit: ${order.productName}\nMontant: ${formatAmount(order.totalAmount)}\n\n✅ Le ticket a été téléchargé. Vérifiez vos fichiers.`;
+          window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
+
+          toast({
+            title: "Ticket téléchargé",
+            description: "Envoyez le fichier via WhatsApp",
+          });
+        }
+
+        // Update order
+        await updateOrder(order.id, {
+          status: "paid",
+          paymentProof: `eticket-${order.id}.png`,
         });
-        toast({
-          title: "Ticket envoyé",
-          description: "Le ticket a été partagé avec succès",
-        });
-      } else {
-        // Fallback: Download and open WhatsApp
-        const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = `eticket-${order.id}.png`;
-        link.click();
-
-        // Open WhatsApp to send to client
-        const cleanPhone = order.clientPhone.replace(/[^0-9]/g, "");
-        const message = `🎫 *Votre E-Ticket*\n\nCommande: #${order.id}\nProduit: ${order.productName}\nMontant: ${formatAmount(order.totalAmount)}\n\n✅ Paiement confirmé - Ticket en pièce jointe`;
-        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, "_blank");
-
-        toast({
-          title: "Téléchargement + WhatsApp",
-          description: "Le ticket a été téléchargé. Envoyez-le via WhatsApp.",
-        });
-      }
-
-      // Mark order as sent
-      await updateOrder(order.id, {
-        status: "paid",
-        paymentProof: `eticket-${order.id}.png`,
-      });
+      }, "image/png");
     } catch (err) {
       console.error("Error sending ticket:", err);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer le ticket",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Impossible d'envoyer le ticket", variant: "destructive" });
     } finally {
       setIsSending(false);
     }
