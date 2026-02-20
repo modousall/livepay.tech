@@ -115,7 +115,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     controlTowerLabels: {
       openWorkLabel: "Ventes en cours",
       escalatedLabel: "Litiges / escalades",
-      throughputLabel: "Produits actifs",
+      throughputLabel: "Offres actives",
     },
   },
   events: {
@@ -139,7 +139,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     highlights: ["Calendrier creneaux", "Rappels auto", "Validation agent"],
     essentialModules: ["appointments", "queue", "crm_backoffice"],
     controlTowerLabels: {
-      openWorkLabel: "RDV en attente",
+      openWorkLabel: "Creneaux en attente",
       escalatedLabel: "Retards critiques",
       throughputLabel: "Creneaux traites",
     },
@@ -266,7 +266,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     label: "Sante privee",
     subtitle: "Parcours patient",
     botHint: "Clients: envoyez CONSULTATION pour prendre rendez-vous.",
-    highlights: ["Triage initial", "RDV medecin", "Rappel consultation"],
+    highlights: ["Triage initial", "Creneau medecin", "Rappel consultation"],
     essentialModules: ["appointments", "queue", "crm_backoffice"],
     controlTowerLabels: {
       openWorkLabel: "Patients en attente",
@@ -275,5 +275,6 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     },
   },
 };
+
 
 

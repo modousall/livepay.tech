@@ -88,7 +88,7 @@ export default function AppointmentsPage() {
         vendorId: user.id,
         module: "appointments",
         sourceRefId: created.id,
-        title: `RDV - ${form.serviceType}`,
+        title: `Creneau - ${form.serviceType}`,
         customerName: form.customerName,
         customerPhone: form.customerPhone,
         priority,
@@ -101,7 +101,7 @@ export default function AppointmentsPage() {
       setPriority("normal");
       setAssignedAgentId("");
       await load();
-      toast({ title: "RDV cree" });
+      toast({ title: "Creneau cree" });
     } finally {
       setSaving(false);
     }
@@ -174,7 +174,7 @@ export default function AppointmentsPage() {
             </Select>
           </div>
           <div className="md:col-span-4">
-            <Button onClick={createItem} disabled={saving}>{saving ? "Creation..." : "Ajouter le RDV"}</Button>
+            <Button onClick={createItem} disabled={saving}>{saving ? "Creation..." : "Ajouter un creneau"}</Button>
           </div>
         </CardContent>
       </Card>
@@ -215,4 +215,5 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
 

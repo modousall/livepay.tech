@@ -451,7 +451,7 @@ export default function Dashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Produits</p>
+                <p className="text-sm text-muted-foreground">Offres</p>
                 <p className="text-2xl font-bold">{products?.filter(p => p.active).length || 0}</p>
               </div>
               <Package className="h-8 w-8 text-primary opacity-50" />
@@ -501,15 +501,15 @@ export default function Dashboard() {
             {recentOrders.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <ShoppingCart className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p>Aucune commande</p>
-                <p className="text-xs mt-1">Le chatbot est actif 24/24 pour recevoir des commandes</p>
+                <p>Aucune vente</p>
+                <p className="text-xs mt-1">Le chatbot est actif 24/24 pour recevoir des demandes</p>
               </div>
             ) : (
               <ScrollArea className="h-[280px]">
                 <div className="space-y-3">
                   {recentOrders.map((order) => {
                     const product = products.find(p => p.id === order.productId);
-                    const productName = product?.name || "Produit";
+                    const productName = product?.name || "Offre";
                     return (
                     <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border">
                       <div>
@@ -538,7 +538,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
-              Stock produits
+              Stock catalogue
             </CardTitle>
             <Link href="/products">
               <Button variant="ghost" size="sm">Gérer →</Button>
@@ -548,10 +548,10 @@ export default function Dashboard() {
             {!products || products.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Package className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p>Aucun produit</p>
+                <p>Aucune offre</p>
                 <Link href="/products">
                   <Button variant="outline" size="sm" className="mt-2">
-                    Ajouter un produit
+                    Ajouter une offre
                   </Button>
                 </Link>
               </div>
@@ -616,7 +616,7 @@ export default function Dashboard() {
             <div className="flex items-start gap-3">
               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">1</span>
               <div>
-                <p className="font-medium">Ajoutez vos produits</p>
+                <p className="font-medium">Ajoutez vos offres</p>
                 <p className="text-muted-foreground">Avec un mot-clé simple (ROBE1)</p>
               </div>
             </div>
@@ -631,7 +631,7 @@ export default function Dashboard() {
               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">3</span>
               <div>
                 <p className="font-medium">Clients envoient le mot-clé</p>
-                <p className="text-muted-foreground">Sur WhatsApp → commande créée</p>
+                <p className="text-muted-foreground">Sur WhatsApp → demande créée</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -647,6 +647,8 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
 
 
 

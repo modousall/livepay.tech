@@ -50,7 +50,7 @@ const FEATURES = [
   {
     icon: BarChart3,
     title: "Pilotage metier",
-    desc: "Dashboard adapte au profil et suivi de performance en temps reel.",
+    desc: "Tableau de bord adapte au profil et suivi de performance en temps reel.",
     tone: "text-emerald-600 bg-emerald-500/10",
   },
 ];
@@ -169,4 +169,5 @@ export default function Landing() {
     </div>
   );
 }
+
 

@@ -47,11 +47,11 @@ const CRM_VERTICALS = [
   },
   {
     name: "Sante privee",
-    workflows: ["Orientation patient", "Prise RDV", "Rappels suivi"],
+    workflows: ["Orientation patient", "Prise de creneau", "Rappels de suivi"],
   },
   {
     name: "Administration / Service public",
-    workflows: ["RDV guichet", "File d'attente", "Suivi demande citoyen"],
+    workflows: ["Creneau guichet", "File d'attente", "Suivi demande citoyen"],
   },
 ];
 
@@ -220,3 +220,4 @@ export default function ModulesPage() {
     </div>
   );
 }
+

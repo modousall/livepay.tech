@@ -60,7 +60,7 @@ export function OnboardingChecklist({ hasProducts, hasPhone, hasLiveMode, onDism
       description: "Créez au moins une offre avec un code unique",
       icon: Package,
       completed: hasProducts,
-      action: { label: "Produits", href: "/products" },
+      action: { label: "Catalogue", href: "/products" },
     },
     {
       id: "live",
@@ -275,5 +275,6 @@ export function WelcomeModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
 
 

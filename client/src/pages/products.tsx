@@ -109,7 +109,7 @@ export default function Products() {
         setProducts(data);
       } catch (error) {
         console.error("Error loading products:", error);
-        toast({ title: "Erreur", description: "Impossible de charger les produits", variant: "destructive" });
+        toast({ title: "Erreur", description: "Impossible de charger les Offres", variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
@@ -203,13 +203,13 @@ export default function Products() {
     try {
       if (editingProduct) {
         await updateProduct(editingProduct.id, formData);
-        toast({ title: "Produit mis à jour" });
+        toast({ title: "Offre mis à jour" });
       } else {
         await createProduct({
           ...formData,
           vendorId: user.id,
         });
-        toast({ title: "Produit créé" });
+        toast({ title: "Offre créé" });
       }
       
       // Reload products
@@ -227,12 +227,12 @@ export default function Products() {
 
   const handleDelete = async (productId: string) => {
     if (!user) return;
-    if (!confirm("Supprimer ce produit ?")) return;
+    if (!confirm("Supprimer ce Offre ?")) return;
     
     setIsDeleting(productId);
     try {
       await deleteProduct(productId);
-      toast({ title: "Produit supprimé" });
+      toast({ title: "Offre supprimé" });
       const data = await getProducts(user.id);
       setProducts(data);
     } catch (error: any) {
@@ -273,8 +273,8 @@ export default function Products() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Mes Produits</h1>
-          <p className="text-muted-foreground">{products.length} produit(s)</p>
+          <h1 className="text-2xl font-bold">Catalogue</h1>
+          <p className="text-muted-foreground">{products.length} Offre(s)</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ export default function Products() {
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingProduct ? "Modifier le produit" : "Nouveau produit"}
+                {editingProduct ? "Modifier le Offre" : "Nouveau Offre"}
               </DialogTitle>
             </DialogHeader>
             
@@ -317,7 +317,7 @@ export default function Products() {
 
               {/* Name */}
               <div className="space-y-2">
-                <Label htmlFor="name">Nom du produit *</Label>
+                <Label htmlFor="name">Nom du Offre *</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -357,7 +357,7 @@ export default function Products() {
                   id="description"
                   value={formData.description}
                   onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Description du produit..."
+                  placeholder="Description du Offre..."
                   rows={3}
                 />
               </div>
@@ -386,7 +386,7 @@ export default function Products() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <ImageIcon className="w-4 h-4" />
-                  Image du produit
+                  Image du Offre
                 </Label>
                 <div className="space-y-2">
                   {formData.imageUrl ? (
@@ -465,7 +465,7 @@ export default function Products() {
               <div className="flex items-center justify-between py-2 border rounded-lg px-3 bg-amber-50 dark:bg-amber-950/20">
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-500" />
-                  <Label htmlFor="featured">Produit vedette</Label>
+                  <Label htmlFor="featured">Offre vedette</Label>
                 </div>
                 <Switch
                   id="featured"
@@ -502,13 +502,13 @@ export default function Products() {
       {products.length === 0 ? (
         <Card className="p-12 text-center">
           <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Aucun produit</h3>
+          <h3 className="text-lg font-semibold mb-2">Aucun Offre</h3>
           <p className="text-muted-foreground mb-4">
-            Créez votre premier produit pour commencer à vendre
+            Créez votre premier Offre pour commencer à vendre
           </p>
           <Button onClick={handleOpenCreate} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 mr-2" />
-            Créer un produit
+            Créer un Offre
           </Button>
         </Card>
       ) : (
@@ -607,3 +607,4 @@ export default function Products() {
     </div>
   );
 }
+

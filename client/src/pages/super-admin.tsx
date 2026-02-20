@@ -339,7 +339,7 @@ export default function SuperAdmin() {
 
   const handlePurgePlatform = async () => {
     const firstConfirm = window.confirm(
-      "Cette action va supprimer tous les utilisateurs, boutiques, produits et Ventes, sauf les super admins. Continuer ?"
+      "Cette action va supprimer tous les utilisateurs, boutiques, Offres et Ventes, sauf les super admins. Continuer ?"
     );
     if (!firstConfirm) return;
     const secondConfirm = window.confirm(
@@ -393,7 +393,7 @@ export default function SuperAdmin() {
             Control Center
           </h1>
           <p className="text-muted-foreground">
-            Gestion globale des boutiques, produits, Ventes et securite
+            Gestion globale des boutiques, Offres, Ventes et securite
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -430,7 +430,7 @@ export default function SuperAdmin() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Produits</p>
+                <p className="text-xs text-muted-foreground">Offres</p>
                 <p className="text-2xl font-bold">{stats?.totalProducts || 0}</p>
               </div>
               <Package className="h-8 w-8 text-purple-500 opacity-50" />
@@ -541,7 +541,7 @@ export default function SuperAdmin() {
                       <TableHead>Vendeur</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Produits</TableHead>
+                      <TableHead>Offres</TableHead>
                       <TableHead>Date inscription</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -1416,4 +1416,5 @@ export default function SuperAdmin() {
     </div>
   );
 }
+
 
