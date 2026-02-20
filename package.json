@@ -9,6 +9,13 @@
     "build:firebase": "vite build",
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
     "deploy": "npm run build:firebase && firebase deploy --only hosting",
     "deploy:rules": "firebase deploy --only firestore:rules,storage",
     "deploy:all": "npm run build:firebase && firebase deploy"
