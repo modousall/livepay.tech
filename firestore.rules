@@ -50,7 +50,7 @@ service cloud.firestore {
     // Entities
     match /entities/{entityId} {
       allow get, list: if isEntityMember(entityId) || isAdminOrSuperAdmin();
-      allow create: if isAuthenticated() && request.auth.uid == entityId;
+      allow create: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == entityId);
       allow update: if isEntityMember(entityId) || isAdminOrSuperAdmin();
       allow delete: if isAdminOrSuperAdmin();
     }
@@ -58,13 +58,13 @@ service cloud.firestore {
     // Vendor configs
     match /vendorConfigs/{configId} {
       // Get: single document read
-      allow get: if isAuthenticated() && 
+      allow get: if isAuthenticated() &&
         (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       // List: query operations (must be authenticated)
       allow list: if isAuthenticated() || isSuperAdmin();
-      allow create: if isAuthenticated() && 
-        isEntityMember(request.resource.data.vendorId);
-      allow update: if isAuthenticated() && 
+      allow create: if isSuperAdmin() || (isAuthenticated() &&
+        isEntityMember(request.resource.data.vendorId));
+      allow update: if isAuthenticated() &&
         (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
