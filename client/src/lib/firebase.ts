@@ -183,8 +183,8 @@ export async function registerWithEmail(
       preferredPaymentMethod: "wave",
       status: "active",
       liveMode: false,
-      uiMode: "simplified",
-      expertModeEnabled: false,
+      uiMode: "expert", // Expert mode par défaut
+      expertModeEnabled: true, // Activé par défaut
       reservationDurationMinutes: 10,
       autoReplyEnabled: true,
       segment: data.segment || "shop",
@@ -364,8 +364,8 @@ export async function getVendorConfig(vendorId: string): Promise<VendorConfig | 
   const data = docData.data();
   const patch: Record<string, any> = {};
   if (!data.segment) patch.segment = "shop";
-  if (!data.uiMode) patch.uiMode = "simplified";
-  if (data.expertModeEnabled === undefined) patch.expertModeEnabled = false;
+  if (!data.uiMode) patch.uiMode = "expert"; // Expert mode par défaut
+  if (data.expertModeEnabled === undefined) patch.expertModeEnabled = true; // Activé par défaut
   if (Object.keys(patch).length > 0) {
     await updateDoc(docData.ref, {
       ...patch,

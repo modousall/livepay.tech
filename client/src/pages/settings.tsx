@@ -114,7 +114,7 @@ export default function Settings() {
     preferredPaymentMethod: "wave",
   });
   const [businessSegment, setBusinessSegment] = useState<BusinessProfileKey>("shop");
-  const [uiMode, setUiMode] = useState<"simplified" | "expert">("simplified");
+  const [uiMode, setUiMode] = useState<"simplified" | "expert">("expert"); // Expert mode par défaut
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -142,8 +142,8 @@ export default function Settings() {
             preferredPaymentMethod: config.preferredPaymentMethod || "wave",
           });
           setBusinessSegment((config.segment as BusinessProfileKey) || "shop");
-          const configUiMode = (config.uiMode as "simplified" | "expert") || "simplified";
-          setUiMode(config.expertModeEnabled ? configUiMode : "simplified");
+          const configUiMode = (config.uiMode as "simplified" | "expert") || "expert";
+          setUiMode(config.expertModeEnabled ? configUiMode : "expert"); // Expert mode par défaut
         }
       } catch (error) {
         console.error("Error loading vendor config:", error);
