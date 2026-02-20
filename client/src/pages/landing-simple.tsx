@@ -284,71 +284,17 @@ export default function Landing() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t bg-muted/30 py-8">
+      {/* Footer - Bande fine avec copyright et liens */}
+      <footer className="border-t py-4 bg-background">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <img src={Logo} alt="LIVE TECH Logo" className="w-8 h-8 rounded-md object-cover" />
-                <span className="font-semibold">LIVE TECH</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Digitalisez votre relation client via WhatsApp Business. Solution SaaS complète pour entreprises et services publics.
-              </p>
-            </div>
-
-            {/* Product */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm">Produit</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#pricing" className="hover:text-foreground">Tarifs</a></li>
-                <li><a href="/login" className="hover:text-foreground">Connexion</a></li>
-                <li><a href="mailto:contact@livepay.tech" className="hover:text-foreground">Demander un accès</a></li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm">Légal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/privacy" className="hover:text-foreground">Confidentialité</a></li>
-                <li><a href="/terms" className="hover:text-foreground">CGU</a></li>
-                <li><a href="/cookies" className="hover:text-foreground">Cookies</a></li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm">Contact</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Mail className="w-3 h-3" />
-                  <a href="mailto:contact@livepay.tech" className="hover:text-foreground">contact@livepay.tech</a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone className="w-3 h-3" />
-                  <span>+221 XX XXX XX XX</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Clock className="w-3 h-3" />
-                  <span>Lun-Ven, 9h-18h GMT</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <Separator className="my-6" />
-
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <p>&copy; 2026 LIVE TECH. Tous droits réservés.</p>
             <div className="flex items-center gap-4">
-              <a href="/privacy" className="hover:text-foreground transition-colors">Confidentialité</a>
-              <span>•</span>
+              <a href="/privacy" className="hover:text-foreground transition-colors">Politique de confidentialité</a>
+              <span className="text-muted-foreground/50">•</span>
               <a href="/terms" className="hover:text-foreground transition-colors">CGU</a>
-              <span>•</span>
-              <a href="mailto:contact@livepay.tech" className="hover:text-foreground transition-colors">Support</a>
+              <span className="text-muted-foreground/50">•</span>
+              <a href="mailto:contact@livepay.tech" className="hover:text-foreground transition-colors">Contact</a>
             </div>
           </div>
         </div>
