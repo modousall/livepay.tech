@@ -87,6 +87,7 @@ import {
   type VendorConfig,
   type PlatformConfig,
 } from "@/lib/firebase";
+import { createEntityWithAdmin, sendWelcomeEmail } from "@/lib/create-entity";
 
 interface PlatformStats {
   totalVendors: number;
@@ -114,6 +115,19 @@ export default function SuperAdmin() {
   const [searchVendor, setSearchVendor] = useState("");
   const [searchOrder, setSearchOrder] = useState("");
   const [searchUser, setSearchUser] = useState("");
+
+  // Create entity dialog
+  const [showCreateEntityDialog, setShowCreateEntityDialog] = useState(false);
+  const [isCreatingEntity, setIsCreatingEntity] = useState(false);
+  const [newEntityData, setNewEntityData] = useState({
+    businessName: "",
+    adminEmail: "",
+    adminPassword: "",
+    adminFirstName: "",
+    adminLastName: "",
+    phone: "",
+    sector: "shop",
+  });
   
   // User action dialogs
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -433,7 +447,7 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -445,7 +459,7 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -457,7 +471,7 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-green-50 dark:bg-green-950/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -471,7 +485,7 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -485,7 +499,7 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -497,6 +511,17 @@ export default function SuperAdmin() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Action Button */}
+      <div className="flex justify-end mt-6 mb-4">
+        <Button
+          onClick={() => setShowCreateEntityDialog(true)}
+          className="bg-green-500 hover:bg-green-600"
+        >
+          <Users className="w-4 h-4 mr-2" />
+          Créer une entité
+        </Button>
       </div>
       
       {/* Main Tabs */}
@@ -1499,7 +1524,235 @@ export default function SuperAdmin() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Create Entity Dialog */}
+      <CreateEntityDialog
+        open={showCreateEntityDialog}
+        onOpenChange={setShowCreateEntityDialog}
+      />
     </div>
+  );
+}
+
+// Create Entity Dialog Component
+function CreateEntityDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    businessName: "",
+    adminEmail: "",
+    adminPassword: "",
+    adminFirstName: "",
+    adminLastName: "",
+    phone: "",
+    sector: "shop",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.businessName || !formData.adminEmail || !formData.adminPassword) {
+      toast({
+        title: "Champs requis",
+        description: "Veuillez remplir au moins le nom, l'email et le mot de passe",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+      // Create entity
+      const result = await createEntityWithAdmin({
+        businessName: formData.businessName,
+        adminEmail: formData.adminEmail,
+        adminPassword: formData.adminPassword,
+        adminFirstName: formData.adminFirstName || "Admin",
+        adminLastName: formData.adminLastName,
+        phone: formData.phone,
+        sector: formData.sector as any,
+      });
+
+      toast({
+        title: "Entité créée",
+        description: `L'entité "${formData.businessName}" a été créée avec succès`,
+      });
+
+      // Open email client to send credentials
+      sendWelcomeEmail(
+        result.adminEmail,
+        formData.businessName,
+        result.temporaryPassword
+      );
+
+      toast({
+        title: "Email envoyé",
+        description: "Les identifiants ont été envoyés à l'administrateur",
+      });
+
+      onOpenChange(false);
+      setFormData({
+        businessName: "",
+        adminEmail: "",
+        adminPassword: "",
+        adminFirstName: "",
+        adminLastName: "",
+        phone: "",
+        sector: "shop",
+      });
+      
+      // Reload page to update stats
+      window.location.reload();
+      
+    } catch (error: any) {
+      console.error("Error creating entity:", error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de créer l'entité",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Créer une nouvelle entité</DialogTitle>
+          <DialogDescription>
+            Créez une nouvelle entreprise avec son administrateur. Les identifiants seront envoyés par email.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Nom de l'entreprise *</Label>
+              <Input
+                id="businessName"
+                value={formData.businessName}
+                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                placeholder="Ex: Boutique Dakar"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sector">Secteur d'activité</Label>
+              <Select
+                value={formData.sector}
+                onValueChange={(value) => setFormData({ ...formData, sector: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="shop">E-commerce</SelectItem>
+                  <SelectItem value="event">Événementiel</SelectItem>
+                  <SelectItem value="service">Services</SelectItem>
+                  <SelectItem value="admin">Administration</SelectItem>
+                  <SelectItem value="delivery">Livraison</SelectItem>
+                  <SelectItem value="telecom">Télécom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="adminEmail">Email administrateur *</Label>
+              <Input
+                id="adminEmail"
+                type="email"
+                value={formData.adminEmail}
+                onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
+                placeholder="admin@entreprise.com"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="adminPassword">Mot de passe temporaire *</Label>
+              <Input
+                id="adminPassword"
+                type="password"
+                value={formData.adminPassword}
+                onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
+                placeholder="Min 6 caractères"
+                minLength={6}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="adminFirstName">Prénom administrateur</Label>
+              <Input
+                id="adminFirstName"
+                value={formData.adminFirstName}
+                onChange={(e) => setFormData({ ...formData, adminFirstName: e.target.value })}
+                placeholder="Ex: Mamadou"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="adminLastName">Nom administrateur</Label>
+              <Input
+                id="adminLastName"
+                value={formData.adminLastName}
+                onChange={(e) => setFormData({ ...formData, adminLastName: e.target.value })}
+                placeholder="Ex: Diop"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Téléphone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="+221 XX XXX XX XX"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isCreating}
+            >
+              Annuler
+            </Button>
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Créer l'entité
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
