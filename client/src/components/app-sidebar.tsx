@@ -21,19 +21,19 @@ import { Button } from "@/components/ui/button";
 import { BUSINESS_PROFILES, type BusinessProfileKey, type PersonaModuleId } from "@/lib/business-profiles";
 
 const baseNavItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Modules", url: "/modules", icon: Layers },
+  { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
+  { title: "Parcours", url: "/modules", icon: Layers },
   { title: "Parametres", url: "/settings", icon: Settings },
 ];
 
 const personaNavMap: Record<PersonaModuleId, { title: string; url: string; icon: any }> = {
-  products: { title: "Produits", url: "/products", icon: Package },
-  orders: { title: "Commandes", url: "/orders", icon: ShoppingCart },
-  appointments: { title: "RDV", url: "/modules/appointments", icon: Layers },
-  queue: { title: "File", url: "/modules/queue", icon: Layers },
+  products: { title: "Catalogue", url: "/products", icon: Package },
+  orders: { title: "Ventes", url: "/orders", icon: ShoppingCart },
+  appointments: { title: "Agenda", url: "/modules/appointments", icon: Layers },
+  queue: { title: "File d'attente", url: "/modules/queue", icon: Layers },
   ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: Layers },
   interventions: { title: "Interventions", url: "/modules/interventions", icon: Layers },
-  crm_backoffice: { title: "CRM Back-office", url: "/modules/crm-backoffice", icon: Headset },
+  crm_backoffice: { title: "Centre CRM", url: "/modules/crm-backoffice", icon: Headset },
 };
 
 const adminItems = [{ title: "Admin", url: "/admin", icon: Shield }];

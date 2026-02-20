@@ -46,21 +46,21 @@ export interface PersonaModuleDefinition {
 export const PERSONA_MODULES: Record<PersonaModuleId, PersonaModuleDefinition> = {
   products: {
     id: "products",
-    title: "Catalogue produits",
+    title: "Catalogue",
     path: "/products",
-    desc: "Gestion du catalogue et mots-cles",
+    desc: "Offres, visuels et codes produit",
   },
   orders: {
     id: "orders",
-    title: "Commandes",
+    title: "Ventes",
     path: "/orders",
-    desc: "Suivi commandes et paiements",
+    desc: "Ventes, paiements et suivi",
   },
   appointments: {
     id: "appointments",
-    title: "Rendez-vous",
+    title: "Agenda",
     path: "/modules/appointments",
-    desc: "Gestion des creneaux et confirmations",
+    desc: "Creneaux, confirmations et suivi",
   },
   queue: {
     id: "queue",
@@ -72,7 +72,7 @@ export const PERSONA_MODULES: Record<PersonaModuleId, PersonaModuleDefinition> =
     id: "ticketing",
     title: "Billetterie",
     path: "/modules/ticketing",
-    desc: "Emission et controle des e-tickets",
+    desc: "Emission et controle des tickets",
   },
   interventions: {
     id: "interventions",
@@ -82,9 +82,9 @@ export const PERSONA_MODULES: Record<PersonaModuleId, PersonaModuleDefinition> =
   },
   crm_backoffice: {
     id: "crm_backoffice",
-    title: "CRM Back-office",
+    title: "Centre CRM",
     path: "/modules/crm-backoffice",
-    desc: "SLA, assignation, escalades et historique tickets",
+    desc: "SLA, assignations, escalades et historique",
   },
 };
 
@@ -113,7 +113,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     highlights: ["Catalogue produit", "Paiement mobile", "Suivi livraison"],
     essentialModules: ["products", "orders", "crm_backoffice"],
     controlTowerLabels: {
-      openWorkLabel: "Commandes en cours",
+      openWorkLabel: "Ventes en cours",
       escalatedLabel: "Litiges / escalades",
       throughputLabel: "Produits actifs",
     },
@@ -133,7 +133,7 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
   },
   appointments: {
     key: "appointments",
-    label: "Rendez-vous services",
+    label: "Agenda services",
     subtitle: "Prise de rendez-vous",
     botHint: "Clients: envoyez RDV + service (ex: RDV CARDIO) pour un creneau.",
     highlights: ["Calendrier creneaux", "Rappels auto", "Validation agent"],
@@ -275,3 +275,5 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
     },
   },
 };
+
+

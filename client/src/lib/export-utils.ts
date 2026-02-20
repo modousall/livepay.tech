@@ -12,7 +12,7 @@ import type { Order, Product } from "@/lib/firebase";
  */
 export function exportOrdersToCSV(orders: Order[], filename?: string): void {
   const headers = [
-    "ID Commande",
+    "ID Vente",
     "Date",
     "Client",
     "Téléphone",
@@ -48,7 +48,7 @@ export function exportOrdersToCSV(orders: Order[], filename?: string): void {
   const BOM = "\uFEFF";
   const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8" });
   
-  const defaultFilename = `commandes_${format(new Date(), "yyyy-MM-dd")}.csv`;
+  const defaultFilename = `ventes_${format(new Date(), "yyyy-MM-dd")}.csv`;
   downloadBlob(blob, filename || defaultFilename);
 }
 
@@ -109,8 +109,8 @@ export function exportAnalyticsSummary(data: {
     "",
     "=== RÉSUMÉ ===",
     `Revenu total: ${formatPrice(data.totalRevenue)}`,
-    `Commandes totales: ${data.totalOrders}`,
-    `Commandes payées: ${data.paidOrders}`,
+    `Ventes totales: ${data.totalOrders}`,
+    `Ventes payées: ${data.paidOrders}`,
     `Taux de conversion: ${data.conversionRate.toFixed(1)}%`,
     `Panier moyen: ${formatPrice(data.averageOrderValue)}`,
     "",
@@ -159,3 +159,4 @@ function translateStatus(status: string): string {
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
 }
+

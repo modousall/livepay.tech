@@ -339,7 +339,7 @@ export default function SuperAdmin() {
 
   const handlePurgePlatform = async () => {
     const firstConfirm = window.confirm(
-      "Cette action va supprimer tous les utilisateurs, boutiques, produits et commandes, sauf les super admins. Continuer ?"
+      "Cette action va supprimer tous les utilisateurs, boutiques, produits et Ventes, sauf les super admins. Continuer ?"
     );
     if (!firstConfirm) return;
     const secondConfirm = window.confirm(
@@ -393,7 +393,7 @@ export default function SuperAdmin() {
             Control Center
           </h1>
           <p className="text-muted-foreground">
-            Gestion globale des boutiques, produits, commandes et securite
+            Gestion globale des boutiques, produits, Ventes et securite
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -442,7 +442,7 @@ export default function SuperAdmin() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Commandes</p>
+                <p className="text-xs text-muted-foreground">Ventes</p>
                 <p className="text-2xl font-bold">{stats?.totalOrders || 0}</p>
               </div>
               <ShoppingCart className="h-8 w-8 text-orange-500 opacity-50" />
@@ -500,7 +500,7 @@ export default function SuperAdmin() {
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline">Commandes</span>
+            <span className="hidden sm:inline">Ventes</span>
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <UserCog className="h-4 w-4" />
@@ -626,7 +626,7 @@ export default function SuperAdmin() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle>Commandes ({orders.length})</CardTitle>
+                <CardTitle>Ventes ({orders.length})</CardTitle>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -1384,7 +1384,7 @@ export default function SuperAdmin() {
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Dernières commandes payées</CardTitle>
+                <CardTitle className="text-lg">Dernières Ventes payées</CardTitle>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[300px]">
@@ -1416,3 +1416,4 @@ export default function SuperAdmin() {
     </div>
   );
 }
+

@@ -125,13 +125,13 @@ export default function AppointmentsPage() {
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Rendez-vous</h1>
+        <h1 className="text-2xl font-bold">Agenda</h1>
         <p className="text-muted-foreground">Gestion des creneaux et confirmations</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Nouveau rendez-vous</CardTitle>
+          <CardTitle>Nouveau Agenda</CardTitle>
         </CardHeader>
         <CardContent className="grid md:grid-cols-4 gap-3">
           <div className="space-y-1">
@@ -190,7 +190,7 @@ export default function AppointmentsPage() {
               <Skeleton className="h-20" />
             </>
           ) : items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun rendez-vous pour le moment.</p>
+            <p className="text-sm text-muted-foreground">Aucun Agenda pour le moment.</p>
           ) : (
             items.map((item) => (
               <div key={item.id} className="rounded-lg border p-3 flex items-center justify-between gap-3">
@@ -215,3 +215,4 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+

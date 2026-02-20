@@ -58,7 +58,7 @@ export default function Orders() {
         setProducts(productsData);
       } catch (error) {
         console.error("Error loading orders:", error);
-        toast({ title: "Erreur", description: "Impossible de charger les commandes", variant: "destructive" });
+        toast({ title: "Erreur", description: "Impossible de charger les Ventes", variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
@@ -144,8 +144,8 @@ export default function Orders() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Commandes</h1>
-          <p className="text-muted-foreground">Suivi des commandes WhatsApp</p>
+          <h1 className="text-2xl font-bold">Ventes</h1>
+          <p className="text-muted-foreground">Suivi des Ventes WhatsApp</p>
         </div>
         <div className="flex items-center gap-2">
           <Button 
@@ -221,14 +221,14 @@ export default function Orders() {
       {/* Orders List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Historique des commandes</CardTitle>
+          <CardTitle className="text-lg">Historique des Ventes</CardTitle>
         </CardHeader>
         <CardContent>
           {orders.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Aucune commande pour le moment</p>
-              <p className="text-sm mt-2">Les commandes WhatsApp apparaîtront ici</p>
+              <p className="text-sm mt-2">Les Ventes WhatsApp apparaîtront ici</p>
             </div>
           ) : (
             <ScrollArea className="h-[500px]">
@@ -436,3 +436,4 @@ export default function Orders() {
     </div>
   );
 }
+

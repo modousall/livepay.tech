@@ -570,7 +570,7 @@ export default function Settings() {
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-green-500" />
-          <h2 className="font-semibold">💬 Commandes WhatsApp</h2>
+          <h2 className="font-semibold">💬 Ventes WhatsApp</h2>
         </div>
 
         <div className="space-y-3">
@@ -718,3 +718,4 @@ export default function Settings() {
 // Export pour compatibilité
 export { loadSettings };
 export type { VendorSettings };
+

@@ -139,7 +139,7 @@ export function PerformanceMetrics({ analytics }: AnalyticsChartsProps) {
             ) : (
               <TrendingDown className="h-4 w-4 text-red-500" />
             )}
-            <span className="text-sm">Commandes today</span>
+            <span className="text-sm">Ventes du jour</span>
           </div>
           <span className="font-semibold">{analytics.todayPaidOrders} payées / {analytics.todayOrders} total</span>
         </div>
@@ -247,3 +247,4 @@ export function ConversionFunnel({ analytics }: AnalyticsChartsProps) {
     </Card>
   );
 }
+

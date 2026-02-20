@@ -20,7 +20,7 @@ const FEATURES = [
   {
     icon: MessageCircle,
     title: "Chatbot WhatsApp 24/7",
-    desc: "Une entree unique client pour commandes, tickets, rendez-vous et file d'attente.",
+    desc: "Une entree unique client pour commandes, tickets, Agenda et file d'attente.",
     tone: "text-green-600 bg-green-500/10",
   },
   {
@@ -37,7 +37,7 @@ const FEATURES = [
   },
   {
     icon: CalendarClock,
-    title: "Rendez-vous services",
+    title: "Agenda services",
     desc: "Gestion des creneaux pour hopitaux, administrations, prestataires.",
     tone: "text-orange-600 bg-orange-500/10",
   },
@@ -89,7 +89,7 @@ export default function Landing() {
                 <span className="text-green-500">vendre et servir</span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg">
-                E-commerce, billetterie evenementielle, rendez-vous services publics
+                E-commerce, billetterie evenementielle, Agenda services publics
                 et file d'attente numerique unifies dans la meme plateforme.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -169,3 +169,4 @@ export default function Landing() {
     </div>
   );
 }
+

@@ -115,7 +115,7 @@ const RECOMMENDED_MODE_BY_PROFILE: Record<BusinessProfileKey, "simplified" | "ex
 };
 
 const CRM_MODULE_LABELS: Record<CrmModule, string> = {
-  appointments: "Rendez-vous",
+  appointments: "Agenda",
   queue_management: "File d'attente",
   ticketing: "Billetterie",
   interventions: "Interventions",
@@ -336,7 +336,7 @@ export default function Dashboard() {
       <QuickActions />
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">Dashboard</h1>
+        <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">Tableau de bord</h1>
         <p className="text-muted-foreground">
           LivePay - {profileMeta.subtitle} ({isExpertMode ? "mode expert" : "mode simplifie"})
         </p>
@@ -379,7 +379,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Control Tower</CardTitle>
+          <CardTitle className="text-lg">Centre de pilotage</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-3 gap-3">
@@ -410,7 +410,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Modules metier actifs</CardTitle>
+          <CardTitle className="text-lg">Parcours actifs</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -492,7 +492,7 @@ export default function Dashboard() {
         {/* Recent Orders */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg">Commandes récentes</CardTitle>
+            <CardTitle className="text-lg">Ventes récentes</CardTitle>
             <Link href="/orders">
               <Button variant="ghost" size="sm">Voir tout →</Button>
             </Link>
@@ -647,5 +647,6 @@ export default function Dashboard() {
     </div>
   );
 }
+
 
 

@@ -91,7 +91,7 @@ export default function ModulesPage() {
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Modules metier</h1>
+        <h1 className="text-2xl font-bold">Parcours metiers</h1>
         <p className="text-muted-foreground">
           Configuration et evolution de votre plateforme selon votre secteur.
         </p>
@@ -132,7 +132,7 @@ export default function ModulesPage() {
                   <Button className="w-full" variant="outline">Ouvrir CRM</Button>
                 </Link>
                 <Link href="/dashboard">
-                  <Button className="w-full" variant="outline">Control tower</Button>
+                  <Button className="w-full" variant="outline">Centre de pilotage</Button>
                 </Link>
               </div>
             </CardContent>

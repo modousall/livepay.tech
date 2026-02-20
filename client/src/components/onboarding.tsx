@@ -56,8 +56,8 @@ export function OnboardingChecklist({ hasProducts, hasPhone, hasLiveMode, onDism
     },
     {
       id: "products",
-      title: "Ajouter vos produits",
-      description: "Créez au moins un produit avec un mot-clé unique",
+      title: "Créer vos offres",
+      description: "Créez au moins une offre avec un code unique",
       icon: Package,
       completed: hasProducts,
       action: { label: "Produits", href: "/products" },
@@ -106,7 +106,7 @@ export function OnboardingChecklist({ hasProducts, hasPhone, hasLiveMode, onDism
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Configuration de votre boutique</h3>
+            <h3 className="font-semibold">Configuration initiale</h3>
           </div>
           <Badge variant="outline">{completedCount}/{steps.length}</Badge>
         </div>
@@ -275,4 +275,5 @@ export function WelcomeModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
 
