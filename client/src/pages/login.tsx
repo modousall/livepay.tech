@@ -52,7 +52,7 @@ export default function Login() {
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Connexion</h1>
             <p className="text-muted-foreground">
-              Accedez a votre espace vendeur/prestataire
+              Accedez a votre espace entite/prestataire
             </p>
           </div>
 
@@ -121,3 +121,4 @@ export default function Login() {
     </div>
   );
 }
+

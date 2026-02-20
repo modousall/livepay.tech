@@ -65,24 +65,25 @@ export default function ModulesPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<VendorConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const entityId = user?.entityId || user?.id;
 
   useEffect(() => {
     const run = async () => {
-      if (!user) return;
+      if (!entityId) return;
       setLoading(true);
       try {
-        const cfg = await getVendorConfig(user.id);
+        const cfg = await getVendorConfig(entityId);
         setConfig(cfg);
       } finally {
         setLoading(false);
       }
     };
     run();
-  }, [user]);
+  }, [entityId]);
 
   const profileKey = (config?.segment as BusinessProfileKey) || "shop";
   const profile = BUSINESS_PROFILES[profileKey];
-  const isExpertMode = (config?.uiMode || "simplified") === "expert";
+  const isExpertMode = (config?.uiMode || "simplified") === "expert" && config?.expertModeEnabled === true;
   const moduleIds = isExpertMode
     ? (Object.keys(PERSONA_MODULES) as Array<keyof typeof PERSONA_MODULES>)
     : profile.essentialModules;

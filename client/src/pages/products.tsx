@@ -77,7 +77,7 @@ const defaultFormData: ProductFormData = {
 
 export default function Products() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
   const queryClient = useQueryClient();
   
   const [open, setOpen] = useState(false);
@@ -92,20 +92,20 @@ export default function Products() {
   const [formData, setFormData] = useState<ProductFormData>(defaultFormData);
 
   const shareStoreLink = async () => {
-    if (!user) return;
-    const storeUrl = `${window.location.origin}/shop/${user.id}`;
+    if (!entityId) return;
+    const storeUrl = `${window.location.origin}/shop/${entityId}`;
     await navigator.clipboard.writeText(storeUrl);
     toast({ title: "Lien boutique copié", description: "Partagez ce lien avec vos clients." });
   };
 
   // Load products from Firebase
   useEffect(() => {
-    if (!user) return;
+    if (!entityId) return;
     
     const loadProducts = async () => {
       try {
         setIsLoading(true);
-        const data = await getProducts(user.id);
+        const data = await getProducts(entityId);
         setProducts(data);
       } catch (error) {
         console.error("Error loading products:", error);
@@ -183,7 +183,7 @@ export default function Products() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!entityId) return;
     
     // Validation
     if (!formData.keyword.trim()) {
@@ -207,13 +207,13 @@ export default function Products() {
       } else {
         await createProduct({
           ...formData,
-          vendorId: user.id,
+          vendorId: entityId,
         });
         toast({ title: "Offre créé" });
       }
       
       // Reload products
-      const data = await getProducts(user.id);
+      const data = await getProducts(entityId);
       setProducts(data);
       setOpen(false);
       setEditingProduct(null);
@@ -226,14 +226,14 @@ export default function Products() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!user) return;
+    if (!entityId) return;
     if (!confirm("Supprimer ce Offre ?")) return;
     
     setIsDeleting(productId);
     try {
       await deleteProduct(productId);
       toast({ title: "Offre supprimé" });
-      const data = await getProducts(user.id);
+      const data = await getProducts(entityId);
       setProducts(data);
     } catch (error: any) {
       console.error("Delete error:", error);
@@ -607,4 +607,5 @@ export default function Products() {
     </div>
   );
 }
+
 

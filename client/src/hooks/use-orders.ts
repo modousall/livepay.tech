@@ -12,17 +12,18 @@ import {
 
 export function useOrders() {
   const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const queryClient = useQueryClient();
 
   const { data: orders = [], isLoading, error } = useQuery({
-    queryKey: ["orders", user?.id],
-    queryFn: () => (user ? getOrders(user.id) : Promise.resolve([])),
-    enabled: !!user,
+    queryKey: ["orders", entityId],
+    queryFn: () => (entityId ? getOrders(entityId) : Promise.resolve([])),
+    enabled: !!entityId,
   });
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<Order, "id" | "createdAt" | "updatedAt" | "vendorId">) =>
-      createOrder({ ...data, vendorId: user!.id }),
+      createOrder({ ...data, vendorId: entityId! }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },

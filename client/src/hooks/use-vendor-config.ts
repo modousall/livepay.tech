@@ -11,17 +11,18 @@ import {
 
 export function useVendorConfig() {
   const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const queryClient = useQueryClient();
 
   const { data: config, isLoading, error } = useQuery({
-    queryKey: ["vendorConfig", user?.id],
-    queryFn: () => (user ? getVendorConfig(user.id) : Promise.resolve(null)),
-    enabled: !!user,
+    queryKey: ["vendorConfig", entityId],
+    queryFn: () => (entityId ? getVendorConfig(entityId) : Promise.resolve(null)),
+    enabled: !!entityId,
   });
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<VendorConfig, "id" | "createdAt" | "updatedAt" | "vendorId">) =>
-      createVendorConfig({ ...data, vendorId: user!.id }),
+      createVendorConfig({ ...data, vendorId: entityId! }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vendorConfig"] });
     },

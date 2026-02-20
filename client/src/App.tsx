@@ -24,6 +24,7 @@ import InterventionsPage from "@/pages/interventions";
 import CrmBackofficePage from "@/pages/crm-backoffice";
 import Products from "@/pages/products";
 import Orders from "@/pages/orders";
+import EntityMembersPage from "@/pages/entity-members";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin-upcoming";
 import SuperAdmin from "@/pages/super-admin";
@@ -31,7 +32,11 @@ import Pay from "@/pages/pay";
 import ProductPublic from "@/pages/product-public";
 import ShopPublic from "@/pages/shop-public";
 import ETicketPage from "@/pages/eticket";
+import PrivacyPolicy from "@/pages/privacy";
+import TermsOfService from "@/pages/terms";
+import DataDeletion from "@/pages/data-deletion";
 import { InstallPrompt } from "@/components/install-prompt";
+import { AppFooter } from "@/components/app-footer";
 import { isSuperAdmin } from "@/lib/firebase";
 
 function AuthenticatedRouter() {
@@ -70,6 +75,7 @@ function AuthenticatedRouter() {
                   <Route path="/modules/crm-backoffice" component={CrmBackofficePage} />
                   <Route path="/products" component={Products} />
                   <Route path="/orders" component={Orders} />
+                  <Route path="/entity-members" component={EntityMembersPage} />
                   <Route path="/settings" component={Settings} />
                   <Route path="/admin" component={Admin} />
                   <Route path="/super-admin" component={SuperAdmin} />
@@ -78,6 +84,7 @@ function AuthenticatedRouter() {
               <Route component={NotFound} />
             </Switch>
           </main>
+          {!isSuperAdminUser && <AppFooter />}
         </div>
       </div>
     </SidebarProvider>
@@ -105,6 +112,9 @@ function AppRouter() {
         <Route path="/eticket/:token" component={ETicketPage} />
         <Route path="/p/:code" component={ProductPublic} />
         <Route path="/shop/:vendorId" component={ShopPublic} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
+        <Route path="/data-deletion" component={DataDeletion} />
         <Route path="/login">
           {user ? <AuthenticatedRouter /> : <Login />}
         </Route>
@@ -115,6 +125,7 @@ function AppRouter() {
           {user ? <AuthenticatedRouter /> : <Landing />}
         </Route>
       </Switch>
+      {!user && <AppFooter />}
       <InstallPrompt />
     </>
   );

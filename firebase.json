@@ -20,10 +20,6 @@
         "function": "expireOrdersManual"
       },
       {
-        "source": "/api/payments/confirm",
-        "function": "confirmPaymentManual"
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }

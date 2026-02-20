@@ -33,6 +33,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 export default function Orders() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const entityId = user?.entityId || user?.id;
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,14 +46,14 @@ export default function Orders() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!entityId) return;
     
     const loadData = async () => {
       try {
         setIsLoading(true);
         const [ordersData, productsData] = await Promise.all([
-          getOrders(user.id),
-          getProducts(user.id),
+          getOrders(entityId),
+          getProducts(entityId),
         ]);
         setOrders(ordersData);
         setProducts(productsData);
@@ -65,7 +66,7 @@ export default function Orders() {
     };
     
     loadData();
-  }, [user, toast]);
+  }, [entityId, toast]);
 
   // Update order status
   const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, MessageCircle, Shield, Crown, Layers, Headset } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, MessageCircle, Shield, Crown, Layers, Headset, UsersRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -23,6 +23,7 @@ import { BUSINESS_PROFILES, type BusinessProfileKey, type PersonaModuleId } from
 const baseNavItems = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Parcours", url: "/modules", icon: Layers },
+  { title: "Equipe", url: "/entity-members", icon: UsersRound },
   { title: "Parametres", url: "/settings", icon: Settings },
 ];
 
@@ -52,21 +53,22 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [vendorConfig, setVendorConfig] = useState<VendorConfig | null>(null);
+  const entityId = user?.entityId || user?.id;
 
   useEffect(() => {
     const load = async () => {
-      if (!user) return;
-      const cfg = await getVendorConfig(user.id);
+      if (!entityId) return;
+      const cfg = await getVendorConfig(entityId);
       setVendorConfig(cfg);
     };
     load();
-  }, [user?.id]);
+  }, [entityId]);
 
   const isAdmin = (user as any)?.role === "admin";
   const isSuperAdminUser = user?.email ? isSuperAdmin(user.email) : false;
   const profileKey = (vendorConfig?.segment as BusinessProfileKey) || "shop";
   const profile = BUSINESS_PROFILES[profileKey] || BUSINESS_PROFILES.shop;
-  const isExpertMode = (vendorConfig?.uiMode || "simplified") === "expert";
+  const isExpertMode = (vendorConfig?.uiMode || "simplified") === "expert" && vendorConfig?.expertModeEnabled === true;
 
   const personaItems = useMemo(
     () =>
@@ -90,6 +92,9 @@ export function AppSidebar() {
           </div>
           <span className="text-lg font-semibold tracking-tight">LivePay</span>
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {isSuperAdminUser ? "Super Admin" : `Profil: ${profile.label} • ${isExpertMode ? "expert" : "simplifie"}`}
+        </p>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -157,7 +162,7 @@ export function AppSidebar() {
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate">{isSuperAdminUser ? "Super Admin" : user?.firstName || user?.email || "Vendeur"}</p>
+            <p className="text-sm font-medium truncate">{isSuperAdminUser ? "Super Admin" : user?.firstName || user?.email || "Entite"}</p>
             <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
           </div>
           <Button size="icon" variant="ghost" onClick={() => logout()}>

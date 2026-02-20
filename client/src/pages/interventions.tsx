@@ -34,7 +34,7 @@ const NEXT_STATUS: Record<ServiceInterventionStatus, ServiceInterventionStatus> 
 };
 
 export default function InterventionsPage() {
-  const { user } = useAuth();
+  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<ServiceIntervention[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});
@@ -52,14 +52,14 @@ export default function InterventionsPage() {
   });
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!entityId) return;
     setLoading(true);
     try {
-      const [data, agentsData] = await Promise.all([getServiceInterventions(user.id), getCrmAgents(user.id)]);
+      const [data, agentsData] = await Promise.all([getServiceInterventions(entityId), getCrmAgents(entityId)]);
       setItems(data);
       setAgents(agentsData);
       const crmEntries = await Promise.all(
-        data.map(async (it) => [it.id, await getCrmTicketBySource(user.id, "interventions", it.id)] as const)
+        data.map(async (it) => [it.id, await getCrmTicketBySource(entityId, "interventions", it.id)] as const)
       );
       const map: Record<string, CrmTicket> = {};
       crmEntries.forEach(([id, ticket]) => {
@@ -76,7 +76,7 @@ export default function InterventionsPage() {
   }, [load]);
 
   const createItem = async () => {
-    if (!user) return;
+    if (!entityId) return;
     if (!form.title || !form.customerName || !form.customerPhone) {
       toast({ title: "Champs requis", description: "Titre, client et telephone sont obligatoires", variant: "destructive" });
       return;
@@ -84,7 +84,7 @@ export default function InterventionsPage() {
     setSaving(true);
     try {
       const created = await createServiceIntervention({
-        vendorId: user.id,
+        vendorId: entityId,
         title: form.title,
         customerName: form.customerName,
         customerPhone: form.customerPhone,
@@ -95,7 +95,7 @@ export default function InterventionsPage() {
         openedAt: new Date(),
       });
       const crmTicket = await createCrmTicket({
-        vendorId: user.id,
+        vendorId: entityId,
         module: "interventions",
         sourceRefId: created.id,
         title: created.title,
@@ -105,7 +105,7 @@ export default function InterventionsPage() {
         status: "open",
       });
       if (assignedAgentId) {
-        await assignCrmTicket(crmTicket.id, user.id, assignedAgentId, user.email || "vendor");
+        await assignCrmTicket(crmTicket.id, entityId, assignedAgentId, user.email || "vendor");
       }
       setForm({ title: "", customerName: "", customerPhone: "", location: "", assignedTo: "" });
       setPriority("normal");
@@ -209,3 +209,4 @@ export default function InterventionsPage() {
     </div>
   );
 }
+

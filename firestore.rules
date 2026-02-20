@@ -27,6 +27,17 @@ service cloud.firestore {
       return isAdmin() || isSuperAdmin();
     }
 
+    function getEntityId() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entityId != null
+          ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entityId
+          : request.auth.uid;
+    }
+
+    function isEntityMember(entityId) {
+      return isAuthenticated() && getEntityId() == entityId;
+    }
+
     // Users collection
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdminOrSuperAdmin();
@@ -36,17 +47,25 @@ service cloud.firestore {
       allow delete: if isAdminOrSuperAdmin();
     }
 
+    // Entities
+    match /entities/{entityId} {
+      allow get, list: if isEntityMember(entityId) || isAdminOrSuperAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == entityId;
+      allow update: if isEntityMember(entityId) || isAdminOrSuperAdmin();
+      allow delete: if isAdminOrSuperAdmin();
+    }
+
     // Vendor configs
     match /vendorConfigs/{configId} {
       // Get: single document read
       allow get: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       // List: query operations (must be authenticated)
       allow list: if isAuthenticated() || isSuperAdmin();
       allow create: if isAuthenticated() && 
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
@@ -54,28 +73,28 @@ service cloud.firestore {
     match /products/{productId} {
       // Get: single document read (public for active, owner can read all)
       allow get: if resource.data.active == true || 
-        (isAuthenticated() && resource.data.vendorId == request.auth.uid) ||
+        (isAuthenticated() && isEntityMember(resource.data.vendorId)) ||
         isAdminOrSuperAdmin();
       // List: query operations (must be authenticated, code filters by vendorId)
       allow list: if isAuthenticated();
       allow create: if isAuthenticated() && 
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
     }
 
     // Orders
     match /orders/{orderId} {
       // Get: single document read
       allow get: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       // List: query operations (must be authenticated)
       allow list: if isAuthenticated();
       allow create: if true; // Public can create orders (WhatsApp clients)
       allow update: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
@@ -83,13 +102,13 @@ service cloud.firestore {
     match /liveSessions/{sessionId} {
       // Get: single document read
       allow get: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       // List: query operations (must be authenticated)
       allow list: if isAuthenticated();
       allow create: if isAuthenticated() && 
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
@@ -97,13 +116,13 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
       // Get: single document read
       allow get: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       // List: query operations (must be authenticated)
       allow list: if isAuthenticated();
       allow create: if isAuthenticated() && 
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
@@ -111,116 +130,116 @@ service cloud.firestore {
     match /clients/{clientId} {
       // Get: single document read
       allow get: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       // List: query operations (must be authenticated)
       allow list: if isAuthenticated();
       allow create: if isAuthenticated() && 
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAuthenticated() && 
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
     }
 
     // Appointments module
     match /appointments/{appointmentId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // Queue module
     match /queueTickets/{ticketId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // Ticketing module
     match /eventTickets/{eventTicketId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // Interventions module
     match /serviceInterventions/{interventionId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // CRM agents
     match /crmAgents/{agentId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // CRM SLA policies
     match /crmSlaPolicies/{policyId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // CRM tickets
     match /crmTickets/{crmTicketId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow delete: if isAdminOrSuperAdmin();
     }
 
     // CRM ticket history
     match /crmTicketHistory/{historyId} {
       allow get: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow list: if isAuthenticated() &&
-        (resource.data.vendorId == request.auth.uid || isAdminOrSuperAdmin());
+        (isEntityMember(resource.data.vendorId) || isAdminOrSuperAdmin());
       allow create: if isAuthenticated() &&
-        request.resource.data.vendorId == request.auth.uid;
+        isEntityMember(request.resource.data.vendorId);
       allow update, delete: if isAdminOrSuperAdmin();
     }
     

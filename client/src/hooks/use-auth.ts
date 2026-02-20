@@ -28,9 +28,12 @@ export function useAuth() {
 
     const unsubscribe = subscribeToAuth((profile) => {
       clearTimeout(timeout);
-      setUser(profile);
+      const resolvedProfile = profile
+        ? { ...profile, entityId: profile.entityId || profile.id }
+        : profile;
+      setUser(resolvedProfile);
       setIsLoading(false);
-      queryClient.setQueryData(["/api/auth/user"], profile);
+      queryClient.setQueryData(["/api/auth/user"], resolvedProfile);
     });
     
     return () => {
@@ -44,8 +47,9 @@ export function useAuth() {
       return loginWithEmail(credentials.email, credentials.password);
     },
     onSuccess: (profile) => {
-      setUser(profile);
-      queryClient.setQueryData(["/api/auth/user"], profile);
+      const resolvedProfile = { ...profile, entityId: profile.entityId || profile.id };
+      setUser(resolvedProfile);
+      queryClient.setQueryData(["/api/auth/user"], resolvedProfile);
     },
   });
 
@@ -64,8 +68,9 @@ export function useAuth() {
       return registerWithEmail(email, password, profileData);
     },
     onSuccess: (profile) => {
-      setUser(profile);
-      queryClient.setQueryData(["/api/auth/user"], profile);
+      const resolvedProfile = { ...profile, entityId: profile.entityId || profile.id };
+      setUser(resolvedProfile);
+      queryClient.setQueryData(["/api/auth/user"], resolvedProfile);
     },
   });
 

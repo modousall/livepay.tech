@@ -25,7 +25,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function TicketingOpsPage() {
-  const { user } = useAuth();
+  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<EventTicket[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});
@@ -45,14 +45,14 @@ export default function TicketingOpsPage() {
   });
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!entityId) return;
     setLoading(true);
     try {
-      const [data, agentsData] = await Promise.all([getEventTickets(user.id), getCrmAgents(user.id)]);
+      const [data, agentsData] = await Promise.all([getEventTickets(entityId), getCrmAgents(entityId)]);
       setItems(data);
       setAgents(agentsData);
       const crmEntries = await Promise.all(
-        data.map(async (it) => [it.id, await getCrmTicketBySource(user.id, "ticketing", it.id)] as const)
+        data.map(async (it) => [it.id, await getCrmTicketBySource(entityId, "ticketing", it.id)] as const)
       );
       const map: Record<string, CrmTicket> = {};
       crmEntries.forEach(([id, ticket]) => {
@@ -69,7 +69,7 @@ export default function TicketingOpsPage() {
   }, [load]);
 
   const createItem = async () => {
-    if (!user) return;
+    if (!entityId) return;
     if (!form.eventName || !form.eventCode || !form.customerName || !form.customerPhone) {
       toast({ title: "Champs requis", description: "Renseignez les champs obligatoires", variant: "destructive" });
       return;
@@ -77,7 +77,7 @@ export default function TicketingOpsPage() {
     setSaving(true);
     try {
       const created = await createEventTicket({
-        vendorId: user.id,
+        vendorId: entityId,
         eventName: form.eventName,
         eventCode: form.eventCode.toUpperCase(),
         customerName: form.customerName,
@@ -89,7 +89,7 @@ export default function TicketingOpsPage() {
         eventDate: form.eventDate ? new Date(form.eventDate) : undefined,
       });
       const crmTicket = await createCrmTicket({
-        vendorId: user.id,
+        vendorId: entityId,
         module: "ticketing",
         sourceRefId: created.id,
         title: `Ticket ${created.eventCode} - ${created.eventName}`,
@@ -99,7 +99,7 @@ export default function TicketingOpsPage() {
         status: "open",
       });
       if (assignedAgentId) {
-        await assignCrmTicket(crmTicket.id, user.id, assignedAgentId, user.email || "vendor");
+        await assignCrmTicket(crmTicket.id, entityId, assignedAgentId, user.email || "vendor");
       }
       setForm({ eventName: "", eventCode: "", customerName: "", customerPhone: "", seatLabel: "", amount: "0", eventDate: "" });
       setPriority("normal");
@@ -212,3 +212,4 @@ export default function TicketingOpsPage() {
     </div>
   );
 }
+

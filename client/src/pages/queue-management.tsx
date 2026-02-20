@@ -25,7 +25,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function QueueManagementPage() {
-  const { user } = useAuth();
+  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<QueueTicket[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});
@@ -41,14 +41,14 @@ export default function QueueManagementPage() {
   });
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!entityId) return;
     setLoading(true);
     try {
-      const [data, agentsData] = await Promise.all([getQueueTickets(user.id), getCrmAgents(user.id)]);
+      const [data, agentsData] = await Promise.all([getQueueTickets(entityId), getCrmAgents(entityId)]);
       setItems(data);
       setAgents(agentsData);
       const crmEntries = await Promise.all(
-        data.map(async (it) => [it.id, await getCrmTicketBySource(user.id, "queue_management", it.id)] as const)
+        data.map(async (it) => [it.id, await getCrmTicketBySource(entityId, "queue_management", it.id)] as const)
       );
       const map: Record<string, CrmTicket> = {};
       crmEntries.forEach(([id, ticket]) => {
@@ -70,7 +70,7 @@ export default function QueueManagementPage() {
   );
 
   const createItem = async () => {
-    if (!user) return;
+    if (!entityId) return;
     if (!form.customerName || !form.customerPhone || !form.servicePoint) {
       toast({ title: "Champs requis", description: "Renseignez tous les champs", variant: "destructive" });
       return;
@@ -78,7 +78,7 @@ export default function QueueManagementPage() {
     setSaving(true);
     try {
       const created = await createQueueTicket({
-        vendorId: user.id,
+        vendorId: entityId,
         queueNumber: nextQueueNumber,
         customerName: form.customerName,
         customerPhone: form.customerPhone,
@@ -87,7 +87,7 @@ export default function QueueManagementPage() {
         status: "waiting",
       });
       const crmTicket = await createCrmTicket({
-        vendorId: user.id,
+        vendorId: entityId,
         module: "queue_management",
         sourceRefId: created.id,
         title: `Queue #${created.queueNumber} - ${created.servicePoint}`,
@@ -97,7 +97,7 @@ export default function QueueManagementPage() {
         status: "open",
       });
       if (assignedAgentId) {
-        await assignCrmTicket(crmTicket.id, user.id, assignedAgentId, user.email || "vendor");
+        await assignCrmTicket(crmTicket.id, entityId, assignedAgentId, user.email || "vendor");
       }
       setForm({ customerName: "", customerPhone: "", servicePoint: "" });
       setPriority("normal");
@@ -217,3 +217,4 @@ export default function QueueManagementPage() {
     </div>
   );
 }
+

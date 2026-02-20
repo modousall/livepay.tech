@@ -42,6 +42,7 @@ export function InitiateChatDialog({
   const [products, setProducts] = useState<Product[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
 
   // Update phone when defaultPhone changes
   useEffect(() => {
@@ -59,10 +60,10 @@ export function InitiateChatDialog({
 
   // Load products from Firebase when dialog opens
   useEffect(() => {
-    if (open && user) {
-      getProducts(user.id).then(setProducts).catch(console.error);
+    if (open && entityId) {
+      getProducts(entityId).then(setProducts).catch(console.error);
     }
-  }, [open, user]);
+  }, [open, entityId]);
 
   const activeProducts = products.filter((p) => p.active);
 

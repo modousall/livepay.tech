@@ -67,8 +67,8 @@ export default function ETicketPage() {
   }, [token]);
 
   const vendorName = useMemo(() => {
-    if (!vendor) return "Vendeur";
-    return vendor.businessName || [vendor.firstName, vendor.lastName].filter(Boolean).join(" ") || "Vendeur";
+    if (!vendor) return "Entite";
+    return vendor.businessName || [vendor.firstName, vendor.lastName].filter(Boolean).join(" ") || "Entite";
   }, [vendor]);
 
   const ticketDate = useMemo(() => {
@@ -118,7 +118,7 @@ export default function ETicketPage() {
     y = 690;
     ctx.fillStyle = "#111827";
     ctx.font = "bold 34px sans-serif";
-    ctx.fillText("Infos vendeur", 60, y);
+    ctx.fillText("Infos entite", 60, y);
     ctx.font = "30px sans-serif";
     ctx.fillStyle = "#374151";
     ctx.fillText(vendorName, 60, y + 52);

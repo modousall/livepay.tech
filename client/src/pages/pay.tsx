@@ -145,7 +145,7 @@ export default function Pay() {
           clientName: orderData.clientName || orderData.clientPhone,
           status: orderData.status,
           expiresAt: expiresAt.toISOString(),
-          vendorName: vendorDisplayName || "Vendeur",
+          vendorName: vendorDisplayName || "Entite",
           vendorPhone: vendorConfig?.mobileMoneyNumber || vendorProfile?.phone,
         });
       } catch (err) {
@@ -239,7 +239,7 @@ export default function Pay() {
 
       // Generate payment instructions and deep links based on method
       if (selectedMethod === "wave") {
-        result.instructions = "Envoyez le montant au numéro du vendeur via Wave";
+        result.instructions = "Envoyez le montant au numero de l'entite via Wave";
         // Wave deep link: wave://send?phone=NUMBER&amount=AMOUNT
         result.deepLink = `wave://send?phone=${vendorPhoneDigits}&amount=${order.totalAmount}&reference=${token}`;
         result.ussdCode = "*144#";
@@ -261,7 +261,7 @@ export default function Pay() {
         result.ussdCode = `*166*${vendorPhoneDigits}*${order.totalAmount}#`;
         result.deepLink = `freemoney://send?phone=${vendorPhoneDigits}&amount=${order.totalAmount}`;
       } else if (selectedMethod === "cash") {
-        result.instructions = "Contactez le vendeur pour organiser le paiement en espèces";
+        result.instructions = "Contactez l'entite pour organiser le paiement en especes";
         result.instructions += `\n\nNuméro: ${invoice?.vendorPhone || "Non disponible"}`;
       } else if (selectedMethod === "card") {
         result.instructions = "Le paiement par carte sera disponible bientôt";
@@ -314,7 +314,7 @@ export default function Pay() {
 
       toast({
         title: "Preuve envoyée !",
-        description: "Le vendeur va vérifier votre paiement.",
+        description: "L'entite va verifier votre paiement.",
       });
 
       setShowProofUpload(false);
@@ -411,7 +411,7 @@ export default function Pay() {
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-destructive">Lien expire</p>
-                  <p className="text-xs text-muted-foreground mt-1">Contactez le vendeur pour un nouveau lien</p>
+                  <p className="text-xs text-muted-foreground mt-1">Contactez l'entite pour un nouveau lien</p>
                 </div>
               </div>
             )}
@@ -466,7 +466,7 @@ export default function Pay() {
                       {/* Vendor Phone */}
                       {paymentResult.vendorPhone && (
                         <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-                          <p className="text-xs text-muted-foreground">Numéro du vendeur</p>
+                          <p className="text-xs text-muted-foreground">Numero de l'entite</p>
                           <div className="flex items-center justify-between">
                             <span className="font-medium">{paymentResult.vendorPhone}</span>
                             <Button
@@ -536,7 +536,7 @@ export default function Pay() {
                           </Button>
 
                           <p className="text-[10px] text-center text-muted-foreground">
-                            Après envoi, le vendeur vérifiera votre paiement sous peu.
+                            Apres envoi, l'entite verifiera votre paiement sous peu.
                           </p>
                         </div>
                       )}
@@ -628,3 +628,5 @@ export default function Pay() {
     </div>
   );
 }
+
+

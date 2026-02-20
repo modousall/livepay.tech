@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const STATUS_ORDER: AppointmentStatus[] = ["pending", "confirmed", "completed", "cancelled", "no_show"];
 
 export default function AppointmentsPage() {
-  const { user } = useAuth();
+  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [items, setItems] = useState<Appointment[]>([]);
   const [crmBySource, setCrmBySource] = useState<Record<string, CrmTicket>>({});
@@ -45,14 +45,14 @@ export default function AppointmentsPage() {
   });
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!entityId) return;
     setLoading(true);
     try {
-      const [data, agentsData] = await Promise.all([getAppointments(user.id), getCrmAgents(user.id)]);
+      const [data, agentsData] = await Promise.all([getAppointments(entityId), getCrmAgents(entityId)]);
       setItems(data);
       setAgents(agentsData);
       const crmEntries = await Promise.all(
-        data.map(async (it) => [it.id, await getCrmTicketBySource(user.id, "appointments", it.id)] as const)
+        data.map(async (it) => [it.id, await getCrmTicketBySource(entityId, "appointments", it.id)] as const)
       );
       const map: Record<string, CrmTicket> = {};
       crmEntries.forEach(([id, ticket]) => {
@@ -69,7 +69,7 @@ export default function AppointmentsPage() {
   }, [load]);
 
   const createItem = async () => {
-    if (!user) return;
+    if (!entityId) return;
     if (!form.customerName || !form.customerPhone || !form.serviceType || !form.scheduledAt) {
       toast({ title: "Champs requis", description: "Renseignez tous les champs", variant: "destructive" });
       return;
@@ -77,7 +77,7 @@ export default function AppointmentsPage() {
     setSaving(true);
     try {
       const created = await createAppointment({
-        vendorId: user.id,
+        vendorId: entityId,
         customerName: form.customerName,
         customerPhone: form.customerPhone,
         serviceType: form.serviceType,
@@ -85,7 +85,7 @@ export default function AppointmentsPage() {
         status: "pending",
       });
       const crmTicket = await createCrmTicket({
-        vendorId: user.id,
+        vendorId: entityId,
         module: "appointments",
         sourceRefId: created.id,
         title: `Creneau - ${form.serviceType}`,
@@ -95,7 +95,7 @@ export default function AppointmentsPage() {
         status: "open",
       });
       if (assignedAgentId) {
-        await assignCrmTicket(crmTicket.id, user.id, assignedAgentId, user.email || "vendor");
+        await assignCrmTicket(crmTicket.id, entityId, assignedAgentId, user.email || "vendor");
       }
       setForm({ customerName: "", customerPhone: "", serviceType: "", scheduledAt: "" });
       setPriority("normal");
@@ -215,5 +215,6 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+
 
 

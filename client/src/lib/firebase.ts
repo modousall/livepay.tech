@@ -56,6 +56,8 @@ export interface UserProfile {
   businessType?: string;
   phone?: string;
   role: "vendor" | "admin" | "superadmin";
+  entityId?: string;
+  entityRole?: "owner" | "admin" | "agent";
   profileImageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -96,6 +98,8 @@ export async function loginWithEmail(email: string, password: string): Promise<U
       firstName: nameParts[0] || '',
       lastName: nameParts.slice(1).join(' ') || '',
       role: determinedRole,
+      entityId: user.uid,
+      entityRole: "owner",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -111,7 +115,10 @@ export async function loginWithEmail(email: string, password: string): Promise<U
     await updateDoc(doc(db, "users", user.uid), { role: "superadmin" });
   }
   
-  return profile;
+  return {
+    ...profile,
+    entityId: profile.entityId || profile.id,
+  };
 }
 
 export async function registerWithEmail(
@@ -124,6 +131,7 @@ export async function registerWithEmail(
     phone?: string;
     businessType?: string;
     segment?: string;
+    entityId?: string;
   }
 ): Promise<UserProfile> {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -136,6 +144,8 @@ export async function registerWithEmail(
   await updateProfile(user, { displayName });
   
   // Create user profile in Firestore
+  const entityId = data.entityId || user.uid;
+  const entityRole: UserProfile["entityRole"] = data.entityId ? "agent" : "owner";
   const profile: UserProfile = {
     id: user.uid,
     email: email.toLowerCase(),
@@ -145,6 +155,8 @@ export async function registerWithEmail(
     businessType: data.businessType,
     phone: data.phone,
     role: "vendor",
+    entityId,
+    entityRole,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -155,28 +167,41 @@ export async function registerWithEmail(
     updatedAt: Timestamp.fromDate(profile.updatedAt),
   });
 
-  // Create default vendor config so super-admin sees new vendor as active immediately
   const now = Timestamp.now();
-  await addDoc(collection(db, "vendorConfigs"), {
-    vendorId: user.uid,
-    businessName: data.businessName || displayName || "Ma Boutique",
-    preferredPaymentMethod: "wave",
-    status: "active",
-    liveMode: false,
-    uiMode: "simplified",
-    reservationDurationMinutes: 10,
-    autoReplyEnabled: true,
-    segment: data.segment || "shop",
-    allowQuantitySelection: true,
-    requireDeliveryAddress: false,
-    autoReminderEnabled: true,
-    upsellEnabled: false,
-    minTrustScoreRequired: 0,
-    createdAt: now,
-    updatedAt: now,
-  });
+  if (!data.entityId) {
+    await setDoc(doc(db, "entities", entityId), {
+      name: data.businessName || displayName || "Entite LivePay",
+      ownerId: user.uid,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Create default vendor config so super-admin sees new entity as active immediately
+    await addDoc(collection(db, "vendorConfigs"), {
+      vendorId: entityId,
+      businessName: data.businessName || displayName || "Ma Boutique",
+      preferredPaymentMethod: "wave",
+      status: "active",
+      liveMode: false,
+      uiMode: "simplified",
+      expertModeEnabled: false,
+      reservationDurationMinutes: 10,
+      autoReplyEnabled: true,
+      segment: data.segment || "shop",
+      allowQuantitySelection: true,
+      requireDeliveryAddress: false,
+      autoReminderEnabled: true,
+      upsellEnabled: false,
+      minTrustScoreRequired: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
   
-  return profile;
+  return {
+    ...profile,
+    entityId,
+  };
 }
 
 export async function logout(): Promise<void> {
@@ -208,7 +233,39 @@ export async function updateUserProfile(uid: string, data: Partial<UserProfile>)
   const profile = await getUserProfile(uid);
   if (!profile) throw new Error("Erreur mise à jour profil");
   return profile;
+}\r\n\r\nexport function getActiveEntityId(profile: UserProfile | null): string | null {
+  if (!profile) return null;
+  return profile.entityId || profile.id;
 }
+
+export async function getEntityMembers(entityId: string): Promise<UserProfile[]> {
+  const members: UserProfile[] = [];
+  const seen = new Set<string>();
+
+  const ownerProfile = await getUserProfile(entityId);
+  if (ownerProfile) {
+    members.push({ ...ownerProfile, entityId: ownerProfile.entityId || ownerProfile.id });
+    seen.add(ownerProfile.id);
+  }
+
+  const q = query(collection(db, "users"), where("entityId", "==", entityId));
+  const snapshot = await getDocs(q);
+  snapshot.forEach((docSnap) => {
+    if (seen.has(docSnap.id)) return;
+    const data = docSnap.data();
+    members.push({
+      ...data,
+      id: docSnap.id,
+      entityId: data.entityId || docSnap.id,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
+    } as UserProfile);
+    seen.add(docSnap.id);
+  });
+
+  return members.sort((a, b) => (a.createdAt?.getTime?.() || 0) - (b.createdAt?.getTime?.() || 0));
+}
+
 
 // Subscribe to auth state
 export function subscribeToAuth(callback: (user: UserProfile | null) => void): () => void {
@@ -234,6 +291,8 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void): (
             firstName: firebaseUser.displayName?.split(' ')[0],
             lastName: firebaseUser.displayName?.split(' ').slice(1).join(' '),
             role: "superadmin",
+            entityId: firebaseUser.uid,
+            entityRole: "owner",
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -278,7 +337,7 @@ export interface VendorConfig {
   // Common settings
   status: "active" | "inactive" | "suspended";
   liveMode: boolean;
-  uiMode?: "simplified" | "expert";
+  uiMode?: "simplified" | "expert";\r\n  expertModeEnabled?: boolean;
   contextualOnboardingCompletedAt?: Date;
   reservationDurationMinutes: number;
   autoReplyEnabled: boolean;
@@ -300,8 +359,19 @@ export async function getVendorConfig(vendorId: string): Promise<VendorConfig | 
   if (snap.empty) return null;
   const docData = snap.docs[0];
   const data = docData.data();
+  const patch: Record<string, any> = {};
+  if (!data.segment) patch.segment = "shop";
+  if (!data.uiMode) patch.uiMode = "simplified";
+  if (data.expertModeEnabled === undefined) patch.expertModeEnabled = false;
+  if (Object.keys(patch).length > 0) {
+    await updateDoc(docData.ref, {
+      ...patch,
+      updatedAt: Timestamp.now(),
+    });
+  }
   return {
     ...data,
+    ...patch,
     id: docData.id,
     contextualOnboardingCompletedAt: data.contextualOnboardingCompletedAt?.toDate?.(),
     createdAt: data.createdAt?.toDate() || new Date(),
@@ -1778,3 +1848,6 @@ export async function purgePlatformKeepSuperAdmin(): Promise<{
     deletedByCollection: payload.deletedByCollection || {},
   };
 }
+
+
+

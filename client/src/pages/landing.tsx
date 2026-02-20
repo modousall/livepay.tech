@@ -159,15 +159,10 @@ export default function Landing() {
             ))}
           </div>
         </section>
-      </main>
-
-      <footer className="border-t py-6">
-        <div className="max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <span>LivePay &copy; 2026 — livepay.tech</span>
-        </div>
-      </footer>
-    </div>
+      </main>\n</div>
   );
 }
+
+
 
 

@@ -12,17 +12,18 @@ import {
 
 export function useProducts() {
   const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   const queryClient = useQueryClient();
 
   const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ["products", user?.id],
-    queryFn: () => (user ? getProducts(user.id) : Promise.resolve([])),
-    enabled: !!user,
+    queryKey: ["products", entityId],
+    queryFn: () => (entityId ? getProducts(entityId) : Promise.resolve([])),
+    enabled: !!entityId,
   });
 
   const createMutation = useMutation({
     mutationFn: (data: Omit<Product, "id" | "createdAt" | "shareCode" | "reservedStock" | "vendorId">) =>
-      createProduct({ ...data, vendorId: user!.id }),
+      createProduct({ ...data, vendorId: entityId! }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },

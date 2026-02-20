@@ -77,6 +77,7 @@ import {
   getPlatformConfig,
   updatePlatformConfig,
   updateUserRole,
+  updateUserProfile,
   toggleUserStatus,
   deleteUser,
   purgePlatformKeepSuperAdmin,
@@ -119,6 +120,7 @@ export default function SuperAdmin() {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newRole, setNewRole] = useState<"vendor" | "admin" | "superadmin">("vendor");
+  const [newEntityId, setNewEntityId] = useState("");
   
   useEffect(() => {
     if (!user || !user.email || !isSuperAdmin(user.email)) return;
@@ -261,9 +263,15 @@ export default function SuperAdmin() {
     if (!selectedUser) return;
     
     try {
+      const entityIdValue = newEntityId.trim();
       await updateUserRole(selectedUser.id, newRole);
+      if (entityIdValue && entityIdValue !== selectedUser.entityId) {
+        await updateUserProfile(selectedUser.id, { entityId: entityIdValue });
+      }
       setVendors(vendors.map(v => 
-        v.id === selectedUser.id ? { ...v, role: newRole } : v
+        v.id === selectedUser.id
+          ? { ...v, role: newRole, entityId: entityIdValue || v.entityId }
+          : v
       ));
       toast({
         title: "Rôle mis à jour",
@@ -390,10 +398,10 @@ export default function SuperAdmin() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            Control Center
+            Centre de pilotage
           </h1>
           <p className="text-muted-foreground">
-            Gestion globale des boutiques, Offres, Ventes et securite
+            Pilotage global des entites, offres, ventes et securite
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -418,7 +426,7 @@ export default function SuperAdmin() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Vendeurs</p>
+                <p className="text-xs text-muted-foreground">Entites</p>
                 <p className="text-2xl font-bold">{stats?.totalVendors || 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-500 opacity-50" />
@@ -496,7 +504,7 @@ export default function SuperAdmin() {
         <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
           <TabsTrigger value="vendors" className="flex items-center gap-2">
             <Store className="h-4 w-4" />
-            <span className="hidden sm:inline">Vendeurs</span>
+            <span className="hidden sm:inline">Entites</span>
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
@@ -521,7 +529,7 @@ export default function SuperAdmin() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle>Vendeurs ({vendors.length})</CardTitle>
+                <CardTitle>Entites ({vendors.length})</CardTitle>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -538,7 +546,7 @@ export default function SuperAdmin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Vendeur</TableHead>
+                      <TableHead>Entite</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Offres</TableHead>
@@ -581,6 +589,7 @@ export default function SuperAdmin() {
                               onClick={() => {
                                 setSelectedUser(vendor);
                                 setNewRole(vendor.role as any || "vendor");
+                                setNewEntityId(vendor.entityId || vendor.id);
                                 setShowRoleDialog(true);
                               }}
                               title="Changer le rôle"
@@ -742,6 +751,7 @@ export default function SuperAdmin() {
                             onClick={() => {
                               setSelectedUser(userItem);
                               setNewRole(userItem.role as any || "vendor");
+                              setNewEntityId(userItem.entityId || userItem.id);
                               setShowRoleDialog(true);
                             }}
                             title="Changer le rôle"
@@ -789,18 +799,32 @@ export default function SuperAdmin() {
                   Changer le rôle de {selectedUser?.email}
                 </DialogDescription>
               </DialogHeader>
-              <div className="py-4">
-                <Label>Nouveau rôle</Label>
-                <Select value={newRole} onValueChange={(v: any) => setNewRole(v)}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="vendor">Vendeur</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="superadmin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="py-4 space-y-4">
+                <div>
+                  <Label className="text-sm">Role</Label>
+                  <Select value={newRole} onValueChange={(v: any) => setNewRole(v)}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vendor">Entite</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="superadmin">Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="entity-id" className="text-sm">ID Entite</Label>
+                  <Input
+                    id="entity-id"
+                    value={newEntityId}
+                    onChange={(event) => setNewEntityId(event.target.value)}
+                    placeholder="ID de l'entite"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Permet de rattacher plusieurs utilisateurs a la meme entite.
+                  </p>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
@@ -1293,7 +1317,7 @@ export default function SuperAdmin() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Notifications Email</p>
-                      <p className="text-xs text-muted-foreground">Envoyer des emails aux vendeurs</p>
+                      <p className="text-xs text-muted-foreground">Envoyer des emails aux entites</p>
                     </div>
                     <Switch
                       checked={platformConfig?.notifications.emailEnabled || false}
@@ -1303,7 +1327,7 @@ export default function SuperAdmin() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Notifications SMS</p>
-                      <p className="text-xs text-muted-foreground">Envoyer des SMS aux vendeurs</p>
+                      <p className="text-xs text-muted-foreground">Envoyer des SMS aux entites</p>
                     </div>
                     <Switch
                       checked={platformConfig?.notifications.smsEnabled || false}
@@ -1353,7 +1377,7 @@ export default function SuperAdmin() {
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Vendeurs actifs (24/24)</CardTitle>
+                <CardTitle className="text-lg">Entites actifs (24/24)</CardTitle>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[300px]">
@@ -1374,7 +1398,7 @@ export default function SuperAdmin() {
                       })}
                     {vendors.filter(v => vendorConfigs.get(v.id)?.status === "active").length === 0 && (
                       <p className="text-center text-muted-foreground py-8">
-                        Aucun vendeur actif actuellement
+                        Aucun entite actif actuellement
                       </p>
                     )}
                   </div>
@@ -1416,5 +1440,8 @@ export default function SuperAdmin() {
     </div>
   );
 }
+
+
+
 
 

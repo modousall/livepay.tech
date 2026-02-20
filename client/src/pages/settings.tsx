@@ -95,6 +95,7 @@ function saveSettings(settings: VendorSettings): void {
 export default function Settings() {
   const { user, logout, isLoggingOut } = useAuth();
   const { toast } = useToast();
+  const entityId = user?.entityId || user?.id;
   const [settings, setSettings] = useState<VendorSettings>(loadSettings);
   const [hasChanges, setHasChanges] = useState(false);
   const [vendorConfig, setVendorConfig] = useState<VendorConfig | null>(null);
@@ -130,7 +131,7 @@ export default function Settings() {
     const loadConfig = async () => {
       try {
         setIsLoadingConfig(true);
-        const config = await getVendorConfig(user.id);
+        const config = await getVendorConfig(entityId);
         if (config) {
           setVendorConfig(config);
           setChatbotConfig({
@@ -141,7 +142,8 @@ export default function Settings() {
             preferredPaymentMethod: config.preferredPaymentMethod || "wave",
           });
           setBusinessSegment((config.segment as BusinessProfileKey) || "shop");
-          setUiMode((config.uiMode as "simplified" | "expert") || "simplified");
+          const configUiMode = (config.uiMode as "simplified" | "expert") || "simplified";
+          setUiMode(config.expertModeEnabled ? configUiMode : "simplified");
         }
       } catch (error) {
         console.error("Error loading vendor config:", error);
@@ -184,7 +186,7 @@ export default function Settings() {
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !entityId) return;
     if (!profileData.phone) {
       toast({ title: "Erreur", description: "Le numéro de téléphone est obligatoire", variant: "destructive" });
       return;
@@ -210,10 +212,11 @@ export default function Settings() {
           ...mobileMoneyConfig,
           segment: businessSegment,
           uiMode,
+          expertModeEnabled: uiMode === "expert",
         });
       } else {
         const newConfig = await createVendorConfig({
-          vendorId: user.id,
+          vendorId: entityId,
           businessName: user.businessName || "Ma Boutique",
           ...chatbotConfig,
           ...mobileMoneyConfig,
@@ -221,6 +224,7 @@ export default function Settings() {
           liveMode: false,
           segment: businessSegment,
           uiMode,
+          expertModeEnabled: uiMode === "expert",
           allowQuantitySelection: true,
           requireDeliveryAddress: false,
           autoReplyEnabled: true,
@@ -344,7 +348,7 @@ export default function Settings() {
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Choisissez votre type de vendeur/prestataire pour personnaliser le dashboard et les parcours client.
+          Choisissez votre type d'entite/prestataire pour personnaliser le dashboard et les parcours client.
         </p>
 
         <div className="space-y-2">
@@ -718,4 +722,8 @@ export default function Settings() {
 // Export pour compatibilité
 export { loadSettings };
 export type { VendorSettings };
+
+
+
+
 

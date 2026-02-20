@@ -35,7 +35,7 @@ const MODULE_OPTIONS: CrmModule[] = [
 ];
 
 export default function CrmBackofficePage() {
-  const { user } = useAuth();
+  const { user } = useAuth();\r\n  const entityId = user?.entityId || user?.id;
   const { toast } = useToast();
   const [tickets, setTickets] = useState<CrmTicket[]>([]);
   const [agents, setAgents] = useState<CrmAgent[]>([]);
@@ -52,8 +52,8 @@ export default function CrmBackofficePage() {
   });
 
   const load = useCallback(async () => {
-    if (!user) return;
-    const [ticketsData, agentsData] = await Promise.all([getCrmTickets(user.id), getCrmAgents(user.id)]);
+    if (!entityId) return;
+    const [ticketsData, agentsData] = await Promise.all([getCrmTickets(entityId), getCrmAgents(entityId)]);
     setTickets(ticketsData);
     setAgents(agentsData);
   }, [user]);
@@ -70,7 +70,7 @@ export default function CrmBackofficePage() {
   const addAgent = async () => {
     if (!user || !newAgent.name) return;
     await createCrmAgent({
-      vendorId: user.id,
+      vendorId: entityId,
       name: newAgent.name,
       phone: newAgent.phone || undefined,
       active: true,
@@ -81,8 +81,8 @@ export default function CrmBackofficePage() {
   };
 
   const saveSla = async () => {
-    if (!user) return;
-    await upsertCrmSlaPolicy(user.id, slaEdit.module, {
+    if (!entityId) return;
+    await upsertCrmSlaPolicy(entityId, slaEdit.module, {
       targetMinutesLow: Number(slaEdit.low),
       targetMinutesNormal: Number(slaEdit.normal),
       targetMinutesHigh: Number(slaEdit.high),
@@ -91,31 +91,31 @@ export default function CrmBackofficePage() {
       active: true,
     } as any);
     toast({ title: "Politique SLA enregistree" });
-    await getCrmSlaPolicies(user.id);
+    await getCrmSlaPolicies(entityId);
   };
 
   const moveTicket = async (ticket: CrmTicket, toStatus: CrmTicketStatus) => {
-    if (!user) return;
-    await updateCrmTicketStatus(ticket.id, user.id, ticket.status, toStatus, user.email || "vendor");
+    if (!entityId) return;
+    await updateCrmTicketStatus(ticket.id, entityId, ticket.status, toStatus, user.email || "vendor");
     await load();
   };
 
   const assignTicket = async (ticket: CrmTicket, agentId: string) => {
     if (!user || !agentId) return;
-    await assignCrmTicket(ticket.id, user.id, agentId, user.email || "vendor");
+    await assignCrmTicket(ticket.id, entityId, agentId, user.email || "vendor");
     await load();
   };
 
   const escalateNow = async () => {
-    if (!user) return;
-    const count = await runCrmAutoEscalation(user.id, user.email || "vendor");
+    if (!entityId) return;
+    const count = await runCrmAutoEscalation(entityId, user.email || "vendor");
     await load();
     toast({ title: "Escalade auto executee", description: `${count} ticket(s) escalade(s)` });
   };
 
   const previewHistory = async (ticketId: string) => {
-    if (!user) return;
-    const history = await getCrmTicketHistory(user.id, ticketId);
+    if (!entityId) return;
+    const history = await getCrmTicketHistory(entityId, ticketId);
     setHistoryPreview((prev) => ({
       ...prev,
       [ticketId]: history
@@ -224,3 +224,4 @@ export default function CrmBackofficePage() {
     </div>
   );
 }
+

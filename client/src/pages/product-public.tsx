@@ -58,7 +58,7 @@ export default function ProductPublic() {
   }, [params.code]);
 
   const product = data?.product;
-  const vendorName = data?.vendor?.businessName || data?.vendor?.firstName || "Vendeur";
+  const vendorName = data?.vendor?.businessName || data?.vendor?.firstName || "Entite";
   const whatsappNumber = data?.vendor?.phone || data?.config?.mobileMoneyNumber;
   const shopUrl = product ? `/shop/${product.vendorId}` : "/";
 
@@ -80,7 +80,7 @@ export default function ProductPublic() {
       if (isInstagramBrowser) {
         // Copy to clipboard and show instructions
         navigator.clipboard.writeText(product.keyword);
-        alert(`Code copiÃ© ! Ouvrez WhatsApp et envoyez "${product.keyword}" au vendeur.`);
+        alert(`Code copié ! Ouvrez WhatsApp et envoyez "${product.keyword}" a l'entite.`);
         window.location.href = url;
       } else {
         window.open(url, '_blank');
@@ -378,3 +378,6 @@ export default function ProductPublic() {
     </div>
   );
 }
+
+
+

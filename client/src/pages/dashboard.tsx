@@ -140,6 +140,7 @@ function formatMinutes(minutes: number): string {
 export default function Dashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const entityId = user?.entityId || user?.id;
   
   // Data state
   const [config, setConfig] = useState<VendorConfig | null>(null);
@@ -162,14 +163,14 @@ export default function Dashboard() {
       try {
         setIsLoading(true);
         const [configData, productsData, ordersData] = await Promise.all([
-          getVendorConfig(user.id),
-          getProducts(user.id),
-          getOrders(user.id),
+          getVendorConfig(entityId),
+          getProducts(entityId),
+          getOrders(entityId),
         ]);
         setConfig(configData);
         setProducts(productsData);
         setOrders(ordersData);
-        const crmData = await getCrmTickets(user.id);
+        const crmData = await getCrmTickets(entityId);
         setCrmTickets(crmData);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -180,7 +181,7 @@ export default function Dashboard() {
     };
     
     loadData();
-  }, [user, toast]);
+  }, [entityId, toast]);
   
   // Calculate stats from orders
   const stats: OrderStats = {
@@ -198,7 +199,7 @@ export default function Dashboard() {
   const recentOrders = orders.slice(0, 5);
   const profileKey = (config?.segment as BusinessProfileKey) || "shop";
   const profileMeta = BUSINESS_PROFILES[profileKey] || BUSINESS_PROFILES.shop;
-  const isExpertMode = (config?.uiMode || "simplified") === "expert";
+  const isExpertMode = (config?.uiMode || "simplified") === "expert" && config?.expertModeEnabled === true;
   const moduleIds = isExpertMode
     ? (Object.keys(PERSONA_MODULES) as Array<keyof typeof PERSONA_MODULES>)
     : profileMeta.essentialModules;
@@ -221,7 +222,7 @@ export default function Dashboard() {
   }));
 
   useEffect(() => {
-    if (!user || !config) return;
+    if (!user || !config || !entityId) return;
 
     const localKey = `${CONTEXTUAL_ONBOARDING_KEY_PREFIX}${user.id}`;
     const localDone = localStorage.getItem(localKey) === "true";
@@ -258,7 +259,7 @@ export default function Dashboard() {
     try {
       await Promise.all(
         slaPreset.map((preset) =>
-          upsertCrmSlaPolicy(user.id, preset.module, {
+          upsertCrmSlaPolicy(entityId, preset.module, {
             targetMinutesLow: preset.targetMinutesLow,
             targetMinutesNormal: preset.targetMinutesNormal,
             targetMinutesHigh: preset.targetMinutesHigh,
