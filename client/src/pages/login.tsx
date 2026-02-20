@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Radio, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,15 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  // Clear error when component mounts or when user starts typing
+  useEffect(() => {
+    setError("");
+  }, [email, password]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
+
     if (!email || !password) {
       setError("Veuillez remplir tous les champs");
       return;
@@ -29,7 +34,8 @@ export default function Login() {
       await login({ email, password });
       navigate("/");
     } catch (err: any) {
-      setError(err.message || "Erreur de connexion");
+      console.error("Login error:", err);
+      setError(err.message || "Erreur de connexion. Vérifiez vos identifiants.");
     }
   };
 
@@ -38,10 +44,10 @@ export default function Login() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 px-4 py-3">
           <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-              <Radio className="w-4 h-4 text-primary-foreground" />
+            <div className="w-8 h-8 rounded-md bg-green-500 flex items-center justify-center">
+              <Mail className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">LivePay</span>
+            <span className="text-lg font-semibold tracking-tight">LIVE TECH</span>
           </a>
           <ThemeToggle />
         </div>
@@ -52,14 +58,14 @@ export default function Login() {
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Connexion</h1>
             <p className="text-muted-foreground">
-              Accedez a votre espace entite/prestataire
+              Accédez à votre espace LIVE TECH
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {(error || loginError) && (
+            {error && (
               <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                {error || loginError?.message}
+                {error}
               </div>
             )}
 

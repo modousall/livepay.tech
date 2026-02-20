@@ -1,10 +1,10 @@
-# 🚀 LivePay - WhatsApp Live Commerce Platform
+# 🚀 LIVE TECH - WhatsApp Business SaaS Platform
 
-**Chatbot transactionnel WhatsApp pour le commerce en direct en Afrique francophone**
+**Plateforme SaaS B2B pour digitaliser la relation client via WhatsApp Business**
 
-[![GitHub](https://img.shields.io/badge/GitHub-modousall%2Flivepay.tech-blue?logo=github)](https://github.com/modousall/livepay.tech)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.0.0-blue)](package.json)
+[![GitHub](https://img.shields.io/badge/GitHub-modousall%2Flivetech-blue?logo=github)](https://github.com/modousall/livetech)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue)](package.json)
 
 ---
 
@@ -12,14 +12,11 @@
 
 - [Quick Start](#quick-start)
 - [Features](#features)
-- [Project Structure](#project-structure)
 - [Architecture](#architecture)
 - [Setup & Installation](#setup--installation)
 - [Development](#development)
 - [Deployment](#deployment)
 - [Documentation](#documentation)
-- [Contributing](#contributing)
-- [Support](#support)
 
 ---
 
@@ -29,90 +26,63 @@
 
 - **Node.js** v20+ ([Download](https://nodejs.org))
 - **npm** v10+
-- **Firebase CLI** ([Install](https://firebase.google.com/docs/cli))
-- **Git**
+- **Supabase** account (free tier works)
+- **Meta Developer Account** (WhatsApp Business API)
 
 ### 5-Minute Setup
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/modousall/livepay.tech.git
-cd livepay.tech
+git clone https://github.com/modousall/livetech.git
+cd livetech
 
 # 2. Install dependencies
 npm install
-npm --prefix functions install
 
 # 3. Setup environment
 cp .env.example .env
-# Edit .env with your Firebase credentials
+# Edit .env with your Supabase & WhatsApp credentials
 
 # 4. Start development server
 npm run dev
 
 # 5. Open browser
-# Visit: http://localhost:5173
+# Visit: http://localhost:9002
 ```
 
 ---
 
 ## ✨ Features
 
-### 👤 **For Customers**
-- 💬 WhatsApp product inquiries with keyword search
-- 🛒 Interactive product selection & quantity choosing
-- 💳 Multiple payment methods (Mobile Money, Card, Cash)
-- ⏱️ Automatic payment link expiration (10 min)
-- ✅ Real-time order confirmation
+### 💬 **Conversations WhatsApp**
+- Interface unifiée pour toutes les conversations clients
+- Historique complet des messages
+- Assignment aux agents
+- Escalade bot → agent humain
 
-### 🏪 **For Vendors**
-- 📊 Live commerce dashboard with analytics
-- 📦 Product management with inventory tracking
-- 📱 WhatsApp Business integration
-- 💰 Revenue tracking & order management
-- 🔔 Real-time notifications
-- 📞 CRM module for customer management
-- 📅 Appointment & queue management
-- 🎫 Event ticketing system
+### 🤖 **Bot Intelligent**
+- Réponses automatiques par mots-clés
+- Scénarios de conversation configurables sans code
+- Triggers intelligents
+- Flux de conversation multi-étapes
+
+### 📊 **Statistiques Temps Réel**
+- Temps de réponse moyens
+- Taux d'escalade bot/agent
+- Nombre de conversations actives
+- Performance des agents
+
+### 👥 **Gestion des Agents**
+- Rôles: SUPER_ADMIN, CLIENT_ADMIN, AGENT
+- Assignment manuelle des conversations
+- Multi-tenant avec isolation des données
+- Audit logs pour toutes les actions
 
 ### 🔐 **Security & Reliability**
-- Firebase authentication (email/password)
-- Firestore with RLS policies
-- Webhook signature verification
-- Rate limiting & DDoS protection
-- Automated backup & recovery
-
----
-
-## 📁 Project Structure
-
-```
-livepay.tech/
-├── client/                 # React frontend (Vite)
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── lib/           # Utilities, Firebase config
-│   │   ├── pages/         # Page components
-│   │   └── App.tsx        # Main app component
-│   └── index.html
-├── server/                # Express backend
-│   ├── index.ts           # Main server file
-│   ├── routes.ts          # API routes & webhooks
-│   ├── static.ts          # Static file serving
-│   └── vite.ts            # Vite integration
-├── functions/             # Firebase Cloud Functions
-│   ├── lib/
-│   │   ├── services/      # External API integrations
-│   │   ├── triggers/      # Firestore triggers
-│   │   ├── scheduled/     # Scheduled jobs
-│   │   └── webhooks/      # Webhook handlers
-│   └── package.json
-├── shared/                # Shared types
-│   └── types.ts           # TypeScript interfaces
-├── script/                # Build scripts
-└── docs/                  # Documentation
-```
+- Multi-tenant architecture avec isolation
+- Row Level Security (RLS) Supabase
+- JWT authentication
+- Audit logging complet
 
 ---
 
@@ -121,44 +91,68 @@ livepay.tech/
 ### High-Level Overview
 
 ```
-┌─────────────────────────────────────────────────────┐
-│         🌐 WhatsApp Business API (Meta)             │
-│                   ↑  ↓                              │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  ┌──────────────┐       ┌──────────────┐          │
-│  │   Frontend   │───────│   Backend    │          │
-│  │  (React 18)  │       │  (Express)   │          │
-│  └──────────────┘       └──────────────┘          │
-│       ↑   ↓                    ↑   ↓               │
-│       └──────────────┬─────────┘   │               │
-│                      │             │               │
-│                  ┌───▼───────────┐ │               │
-│                  │   Firebase    │ │               │
-│                  │  ├─ Firestore │ │               │
-│                  │  ├─ Storage   │ │               │
-│                  │  └─ Auth      │ │               │
-│                  └───────────────┘ │               │
-│                                    ↓               │
-│              ┌──────────────────────────┐          │
-│              │ Cloud Functions (Webhooks│          │
-│              │  Notifications, Payments │          │
-│              │  Scheduled Tasks)        │          │
-│              └──────────────────────────┘          │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│         🌐 WhatsApp Business API (Meta)      │
+│                   ↑  ↓                       │
+├──────────────────────────────────────────────┤
+│                                              │
+│  ┌──────────────┐       ┌──────────────┐   │
+│  │   Frontend   │───────│   Backend    │   │
+│  │  (Next.js)   │       │ (API Routes) │   │
+│  └──────────────┘       └──────────────┘   │
+│       ↑   ↓                    ↑   ↓        │
+│       └──────────────┬─────────┘   │        │
+│                      │             │        │
+│                  ┌───▼───────────┐ │        │
+│                  │   Supabase    │ │        │
+│                  │  ├─ PostgreSQL│ │        │
+│                  │  ├─ Realtime  │ │        │
+│                  │  └─ Auth      │ │        │
+│                  └───────────────┘ │        │
+│                                    ↓        │
+│              ┌──────────────────────────┐   │
+│              │  Webhook WhatsApp        │   │
+│              │  Bot Engine              │   │
+│              └──────────────────────────┘   │
+└──────────────────────────────────────────────┘
+```
+
+### Multi-Tenant Data Model
+
+```
+tenants/                    # Organizations
+  {id, name, type, status}
+
+users/                      # User accounts
+  {id, email, role, tenantId}
+
+contacts/                   # WhatsApp contacts
+  {id, phoneNumber, name, tenantId}
+
+conversations/              # Conversation threads
+  {id, contactId, tenantId, assignedTo, status}
+
+messages/                   # Individual messages
+  {id, conversationId, direction, content, type}
+
+bot_scenarios/              # Bot configurations
+  {id, tenantId, keywords, response, priority}
+
+audit_logs/                 # Activity tracking
+  {id, userId, action, resource, timestamp}
 ```
 
 ### Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Radix UI |
-| **Backend** | Express.js, Node.js 20 |
-| **Database** | Firebase Firestore (NoSQL) |
-| **Storage** | Firebase Cloud Storage |
-| **Auth** | Firebase Authentication |
-| **Functions** | Firebase Cloud Functions |
-| **External APIs** | WhatsApp Business, Wave, Orange Money, WaSender |
+| **Frontend** | Next.js 14, React, TypeScript, Tailwind CSS |
+| **Backend** | Next.js API Routes |
+| **Database** | PostgreSQL (Supabase) |
+| **Auth** | Supabase Auth (JWT) |
+| **Real-time** | Supabase Realtime |
+| **UI** | shadcn/ui, Radix UI |
+| **Icons** | Lucide React |
 
 ---
 
@@ -171,38 +165,29 @@ livepay.tech/
 cp .env.example .env
 
 # Required variables:
-NODE_ENV=development
-PORT=5000
-APP_BASE_URL=https://livepay.tech
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
-# WhatsApp Business API
-WHATSAPP_PHONE_NUMBER_ID=your_id
-WHATSAPP_ACCESS_TOKEN=your_token
-WHATSAPP_VERIFY_TOKEN=your_verify_token
+WHATSAPP_API_URL=https://graph.facebook.com/v18.0
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=your_verify_token
 
-# Payment Gateways
-WAVE_API_KEY=your_key
-ORANGE_MONEY_KEY=your_key
-
-# Other services
-WASENDER_API_KEY=your_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Firebase Setup
+### Supabase Setup
 
-```bash
-# Login to Firebase
-firebase login
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the database migrations (SQL files in `/supabase/migrations`)
+3. Copy project URL and keys to `.env`
 
-# Initialize functions
-firebase init functions
+### WhatsApp Business API Setup
 
-# Deploy rules
-npm run deploy:rules
-
-# Deploy functions
-npm --prefix functions run deploy
-```
+1. Create a Meta App at [Meta for Developers](https://developers.facebook.com/)
+2. Add WhatsApp product to your app
+3. Configure webhook URL: `https://your-domain.com/api/webhook`
+4. Get Phone Number ID and Access Token
+5. Save credentials in tenant settings
 
 ---
 
@@ -211,24 +196,23 @@ npm --prefix functions run deploy
 ### Available Commands
 
 ```bash
-# Start development server (with hot reload)
+# Start development server
 npm run dev
 
 # Build for production
 npm run build
-npm run build:firebase
+
+# Start production server
+npm start
 
 # Type checking
 npm run check
 
-# Deploy to Firebase Hosting
-npm run deploy
+# Format code
+npm run format
 
-# Deploy Firebase Rules only
-npm run deploy:rules
-
-# Deploy everything
-npm run deploy:all
+# Lint check
+npm run lint
 ```
 
 ### Code Style
@@ -236,57 +220,44 @@ npm run deploy:all
 This project uses **ESLint** and **Prettier**:
 
 ```bash
-# Format code
-npm run format
-
-# Lint check
-npm run lint
-
-# Lint & fix
+# Format & lint
 npm run lint:fix
-```
-
-### Testing
-
-```bash
-# Run tests
-npm test
-
-# Coverage report
-npm run test:coverage
-
-# Watch mode
-npm run test:watch
 ```
 
 ---
 
 ## 🚀 Deployment
 
-### Firebase Hosting
+### Vercel (Recommended)
 
 ```bash
-# Build frontend
-npm run build:firebase
+# 1. Push to GitHub
+git push
 
-# Deploy
-firebase deploy --only hosting
+# 2. Import project in Vercel
+# 3. Add environment variables
+# 4. Deploy
+```
 
-# View logs
-firebase functions:log
+### VPS Deployment
+
+```bash
+# Build
+npm run build
+
+# Start with PM2
+npm install -g pm2
+pm2 start npm --name "livetech" -- start
 ```
 
 ### Production Checklist
 
-- [ ] All environment variables configured
-- [ ] Firebase rules deployed (`npm run deploy:rules`)
-- [ ] Cloud Functions deployed
-- [ ] WhatsApp webhook verified
-- [ ] Payment gateways tested
-- [ ] Analytics configured
-- [ ] Error monitoring enabled
-
-For detailed deployment guide, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- [ ] Supabase credentials configured
+- [ ] WhatsApp webhook publicly accessible
+- [ ] SSL/HTTPS enabled
+- [ ] RLS policies verified
+- [ ] Audit logging enabled
+- [ ] Error monitoring (Sentry)
 
 ---
 
@@ -294,53 +265,45 @@ For detailed deployment guide, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 | Document | Purpose |
 |----------|---------|
-| [ARCHITECTURE_MVP.md](ARCHITECTURE_MVP.md) | System design & data models |
-| [SECURITY_SETUP.md](SECURITY_SETUP.md) | Security configuration guide |
-| [docs/API.md](docs/API.md) | API endpoints documentation |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment procedures |
-| [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) | Contribution guidelines |
+| [docs/API.md](docs/API.md) | API endpoints |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment guide |
+| [docs/BOT_SCENARIOS.md](docs/BOT_SCENARIOS.md) | Bot configuration |
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for:
-
-- Code of Conduct
-- Development setup
-- Pull request process
-- Commit message conventions
+We welcome contributions! Please see [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 ### Quick PR Steps
 
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/my-feature`
-3. Make changes & commit: `git commit -am 'feat: add my feature'`
-4. Push to branch: `git push origin feature/my-feature`
-5. Open Pull Request on GitHub
+3. Commit: `git commit -am 'feat: add my feature'`
+4. Push: `git push origin feature/my-feature`
+5. Open Pull Request
 
 ---
 
 ## 📞 Support
 
-- 📧 Email: contact@livepay.tech
-- 🐛 Issues: [GitHub Issues](https://github.com/modousall/livepay.tech/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/modousall/livepay.tech/discussions)
+- 📧 Email: contact@livetech.africa
+- 🐛 Issues: [GitHub Issues](https://github.com/modousall/livetech/issues)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file for details.
+**Proprietary** - All rights reserved
 
 ---
 
 ## 🙏 Acknowledgments
 
-Built for African merchants & customers. Powering live commerce across francophone Africa.
+Built for African businesses & public services. Powering customer relationships via WhatsApp across francophone Africa.
 
-**Website:** https://livepay.tech  
-**Contact:** contact@livepay.tech
+**Website:** https://livetech.africa
+**Contact:** contact@livetech.africa
 
 ---
 

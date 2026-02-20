@@ -4,62 +4,34 @@
  */
 
 import rateLimit, { RateLimitRequestHandler, MemoryStore } from "express-rate-limit";
-import RedisStore from "rate-limit-redis";
-import { createClient } from "redis";
 
-// Redis client for distributed rate limiting
-let redisClient: ReturnType<typeof createClient> | null = null;
+// Redis is not used in local development - only memory store
+// In production (Firebase), rate limiting is handled differently
+let redisClient: any = null;
 
 /**
  * Initialize Redis client for rate limiting
- * Call this during server startup
+ * In local development, this is skipped - memory store is used instead
  */
 export async function initRateLimiterRedis(): Promise<void> {
-  const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-
-  redisClient = createClient({
-    url: redisUrl,
-  });
-
-  redisClient.on("error", (err) => {
-    console.error("[RATE LIMIT] Redis error:", err);
-  });
-
-  try {
-    await redisClient.connect();
-    console.log("[RATE LIMIT] Connected to Redis");
-  } catch (error) {
-    console.warn("[RATE LIMIT] Failed to connect to Redis, using memory store");
-    redisClient = null;
-  }
+  // Skip Redis initialization in local development
+  // Memory store will be used automatically
+  console.log("[RATE LIMIT] Using memory store (Redis not available in local dev)");
 }
 
 /**
  * Get Redis client instance
  */
-export function getRedisClient(): ReturnType<typeof createClient> | null {
+export function getRedisClient(): any {
   return redisClient;
 }
 
 /**
- * Create a rate limit store (Redis or Memory)
+ * Create a rate limit store (always Memory in local dev)
  */
-function createStore(prefix: string): InstanceType<typeof MemoryStore> | RedisStore {
-  if (redisClient) {
-    const client = redisClient;
-    return new RedisStore({
-      sendCommand: (...args: string[]) => client.sendCommand(args),
-    });
-  }
-
-  // Fallback to memory store (not recommended for production)
-  const store = new Map();
-  return {
-    store,
-    increment: async () => ({ totalHits: 0, resetTime: undefined }),
-    decrement: async () => {},
-    resetKey: async () => {},
-  } as any;
+function createStore(prefix: string): InstanceType<typeof MemoryStore> {
+  // Always use memory store in local development
+  return new MemoryStore();
 }
 
 /**

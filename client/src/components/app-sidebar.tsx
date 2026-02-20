@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound, MessageCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {

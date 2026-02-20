@@ -21,10 +21,10 @@ export function useAuth() {
 
   // Subscribe to Firebase auth state
   useEffect(() => {
-    // Set a timeout to resolve loading state if Firebase takes too long
+    // Set a longer timeout to prevent flash "access denied"
     const timeout = setTimeout(() => {
       setIsLoading(false);
-    }, 3000); // Reduced from 5000 to 3000ms
+    }, 8000); // Increased to 8000ms to allow Firebase to connect
 
     const unsubscribe = subscribeToAuth((profile) => {
       clearTimeout(timeout);

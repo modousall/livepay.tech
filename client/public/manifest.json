@@ -1,7 +1,7 @@
 {
-  "name": "LivePay - Chatbot WhatsApp Live Commerce",
-  "short_name": "LivePay",
-  "description": "Automatisez vos ventes en live avec le chatbot WhatsApp LivePay",
+  "name": "LIVE TECH - WhatsApp Business SaaS Platform",
+  "short_name": "LIVE TECH",
+  "description": "Digitalisez votre relation client via WhatsApp Business",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
@@ -16,6 +16,6 @@
       "purpose": "any"
     }
   ],
-  "categories": ["finance", "business"],
+  "categories": ["business", "productivity"],
   "screenshots": []
 }

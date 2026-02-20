@@ -4,11 +4,28 @@
  */
 
 import { Request, Response } from "express";
-import * as admin from "firebase-admin";
 import * as crypto from "crypto";
 import { logger, logWebhookEvent, logPaymentEvent } from "../logger";
 
-const db = admin.firestore();
+// Mock Firestore for local development without Firebase credentials
+// In production, this will be initialized by Firebase Cloud Functions
+const db: any = {
+  doc: (path: string) => ({
+    get: async () => ({ exists: false, data: () => null }),
+    set: async () => {},
+    update: async () => {},
+    delete: async () => {},
+  }),
+  collection: (path: string) => ({
+    add: async () => ({ id: "dummy" }),
+    doc: (id?: string) => ({
+      get: async () => ({ exists: false, data: () => null }),
+      set: async () => {},
+      update: async () => {},
+      delete: async () => {},
+    }),
+  }),
+};
 
 // Types
 type WebhookStatus = "received" | "processing" | "completed" | "failed";

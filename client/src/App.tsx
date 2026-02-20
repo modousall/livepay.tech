@@ -12,26 +12,15 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
+import Landing from "@/pages/landing-simple"; // Version simplifiée LIVE TECH
 import Login from "@/pages/login";
-// Register removed - Registration is now Super Admin only
 import Dashboard from "@/pages/dashboard";
-// ModulesPage removed - Parcours menu removed
-import AppointmentsPage from "@/pages/appointments";
-import QueueManagementPage from "@/pages/queue-management";
-import TicketingOpsPage from "@/pages/ticketing-ops";
-import InterventionsPage from "@/pages/interventions";
-// CrmBackofficePage removed - CRM is integrated into WhatsApp interactions
 import Products from "@/pages/products";
 import Orders from "@/pages/orders";
 import EntityMembersPage from "@/pages/entity-members";
 import Settings from "@/pages/settings";
-import Admin from "@/pages/admin-upcoming";
 import SuperAdmin from "@/pages/super-admin";
-import Pay from "@/pages/pay";
 import ProductPublic from "@/pages/product-public";
-import ShopPublic from "@/pages/shop-public";
-import ETicketPage from "@/pages/eticket";
 import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
 import DataDeletion from "@/pages/data-deletion";
@@ -62,24 +51,16 @@ function AuthenticatedRouter() {
                 <>
                   <Route path="/" component={SuperAdmin} />
                   <Route path="/super-admin" component={SuperAdmin} />
-                  {/* Catch-all for superadmin - redirect to super admin */}
                   <Route path="/:path*" component={SuperAdmin} />
                 </>
               ) : (
                 <>
                   <Route path="/" component={Dashboard} />
                   <Route path="/dashboard" component={Dashboard} />
-                  {/* Parcours routes removed - modules accessed directly */}
-                  <Route path="/modules/appointments" component={AppointmentsPage} />
-                  <Route path="/modules/queue" component={QueueManagementPage} />
-                  <Route path="/modules/ticketing" component={TicketingOpsPage} />
-                  <Route path="/modules/interventions" component={InterventionsPage} />
-                  <Route path="/products" component={Products} />
-                  <Route path="/orders" component={Orders} />
-                  <Route path="/entity-members" component={EntityMembersPage} />
+                  <Route path="/conversations" component={Orders} />
+                  <Route path="/scenarios" component={Products} />
+                  <Route path="/agents" component={EntityMembersPage} />
                   <Route path="/settings" component={Settings} />
-                  <Route path="/admin" component={Admin} />
-                  {/* Catch-all for authenticated users - redirect to dashboard instead of 404 */}
                   <Route path="/:path*" component={Dashboard} />
                 </>
               )}
@@ -95,7 +76,6 @@ function AuthenticatedRouter() {
 function AppRouter() {
   const { user, isLoading } = useAuth();
 
-  // Afficher un écran de chargement pendant la vérification de l'auth
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -111,17 +91,13 @@ function AppRouter() {
   return (
     <>
       <Switch>
-        <Route path="/pay/:token" component={Pay} />
-        <Route path="/eticket/:token" component={ETicketPage} />
         <Route path="/p/:code" component={ProductPublic} />
-        <Route path="/shop/:vendorId" component={ShopPublic} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/data-deletion" component={DataDeletion} />
         <Route path="/login">
           {user ? <AuthenticatedRouter /> : <Login />}
         </Route>
-        {/* Register removed - Registration is now Super Admin only */}
         <Route>
           {user ? <AuthenticatedRouter /> : <Landing />}
         </Route>
