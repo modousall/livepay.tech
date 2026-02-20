@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export default function QueueManagementPage() {
     servicePoint: "",
   });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -58,11 +58,11 @@ export default function QueueManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    load();
-  }, [user?.id]);
+    void load();
+  }, [load]);
 
   const nextQueueNumber = useMemo(
     () => (items.length ? Math.max(...items.map((x) => x.queueNumber || 0)) + 1 : 1),

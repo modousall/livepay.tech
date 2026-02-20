@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
 import { 
   CheckCircle, 
-  Circle, 
   ArrowRight, 
   Package, 
   MessageCircle, 

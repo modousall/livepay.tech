@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
@@ -52,16 +51,16 @@ export default function CrmBackofficePage() {
     escalation: "30",
   });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user) return;
     const [ticketsData, agentsData] = await Promise.all([getCrmTickets(user.id), getCrmAgents(user.id)]);
     setTickets(ticketsData);
     setAgents(agentsData);
-  };
+  }, [user]);
 
   useEffect(() => {
-    load();
-  }, [user?.id]);
+    void load();
+  }, [load]);
 
   const filteredTickets = useMemo(
     () => (selectedModule === "all" ? tickets : tickets.filter((t) => t.module === selectedModule)),
