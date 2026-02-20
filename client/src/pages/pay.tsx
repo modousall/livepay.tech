@@ -217,6 +217,15 @@ export default function Pay() {
 
   const handlePayment = async () => {
     if (!order || !token) return;
+    
+    // Empêcher les clics multiples
+    if (isProcessing) return;
+    
+    // Vérifier que la commande n'est pas déjà dans le bon statut
+    if (order.status === "reserved" || order.status === "paid") {
+      console.log("[PAYMENT] Order already processed:", order.status);
+      return;
+    }
 
     setIsProcessing(true);
     try {

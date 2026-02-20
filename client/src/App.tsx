@@ -96,12 +96,14 @@ function AuthenticatedRouter() {
 function AppRouter() {
   const { user, isLoading } = useAuth();
 
+  // Afficher un écran de chargement pendant la vérification de l'auth
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="space-y-4 text-center">
           <Skeleton className="h-8 w-32 mx-auto" />
           <Skeleton className="h-4 w-48 mx-auto" />
+          <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
     );

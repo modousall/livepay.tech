@@ -554,6 +554,22 @@ export async function getOrders(vendorId: string): Promise<Order[]> {
 }
 
 export async function createOrder(data: Omit<Order, "id" | "createdAt" | "updatedAt">): Promise<Order> {
+  // Vérifier s'il existe déjà une commande similaire (idempotence)
+  const existingOrders = await getOrders(data.vendorId);
+  const similarOrder = existingOrders.find(order => 
+    order.productId === data.productId &&
+    order.clientPhone === data.clientPhone &&
+    order.status === "pending" &&
+    // Même produit, même client, créé dans les 30 dernières secondes
+    order.createdAt && 
+    (new Date().getTime() - order.createdAt.getTime()) < 30000
+  );
+
+  if (similarOrder) {
+    console.log("[ORDER] Similar order already exists:", similarOrder.id);
+    return similarOrder;
+  }
+
   const now = Timestamp.now();
   const docRef = await addDoc(collection(db, "orders"), {
     ...data,
