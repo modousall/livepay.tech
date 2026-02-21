@@ -42,29 +42,27 @@ function AuthenticatedRouter() {
             <ThemeToggle />
           </header>
           <main className="flex-1 overflow-auto">
-            <Switch>
-              {isSuperAdminUser ? (
-                <>
-                  <Route path="/" component={SuperAdmin} />
-                  <Route path="/super-admin" component={SuperAdmin} />
-                  <Route path="/:path*" component={SuperAdmin} />
-                </>
-              ) : (
-                <>
-                  <Route path="/" component={Dashboard} />
-                  <Route path="/dashboard" component={Dashboard} />
-                  <Route path="/orders" component={Orders} />
-                  <Route path="/conversations" component={Orders} />
-                  <Route path="/products" component={Products} />
-                  <Route path="/products/:rest*" component={Products} />
-                  <Route path="/scenarios" component={Products} />
-                  <Route path="/entity-members" component={EntityMembersPage} />
-                  <Route path="/agents" component={EntityMembersPage} />
-                  <Route path="/settings" component={Settings} />
-                  <Route path="/:path*" component={Dashboard} />
-                </>
-              )}
-            </Switch>
+            {isSuperAdminUser ? (
+              <Switch>
+                <Route path="/" component={SuperAdmin} />
+                <Route path="/super-admin" component={SuperAdmin} />
+                <Route path="/:path*" component={SuperAdmin} />
+              </Switch>
+            ) : (
+              <Switch>
+                <Route path="/" component={Dashboard} />
+                <Route path="/dashboard" component={Dashboard} />
+                <Route path="/orders" component={Orders} />
+                <Route path="/conversations" component={Orders} />
+                <Route path="/products" component={Products} />
+                <Route path="/products/:rest*" component={Products} />
+                <Route path="/scenarios" component={Products} />
+                <Route path="/entity-members" component={EntityMembersPage} />
+                <Route path="/agents" component={EntityMembersPage} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/:path*" component={Dashboard} />
+              </Switch>
+            )}
           </main>
         </div>
       </div>
