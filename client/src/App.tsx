@@ -52,8 +52,11 @@ function AuthenticatedRouter() {
                 <>
                   <Route path="/" component={Dashboard} />
                   <Route path="/dashboard" component={Dashboard} />
+                  <Route path="/orders" component={Orders} />
                   <Route path="/conversations" component={Orders} />
+                  <Route path="/products" component={Products} />
                   <Route path="/scenarios" component={Products} />
+                  <Route path="/entity-members" component={EntityMembersPage} />
                   <Route path="/agents" component={EntityMembersPage} />
                   <Route path="/settings" component={Settings} />
                   <Route path="/:path*" component={Dashboard} />
