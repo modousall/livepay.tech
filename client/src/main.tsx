@@ -3,10 +3,6 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
-  });
-}
+// Disable service worker to avoid stale caching issues in production.
 
 createRoot(document.getElementById("root")!).render(<App />);
