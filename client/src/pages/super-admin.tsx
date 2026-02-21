@@ -838,7 +838,7 @@ export default function SuperAdmin() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="vendor">Entite</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="public_services">Admin</SelectItem>
                       <SelectItem value="superadmin">Super Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1691,10 +1691,10 @@ function CreateEntityDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="shop">E-commerce</SelectItem>
-                  <SelectItem value="event">Événementiel</SelectItem>
-                  <SelectItem value="service">Services</SelectItem>
-                  <SelectItem value="admin">Administration</SelectItem>
-                  <SelectItem value="delivery">Livraison</SelectItem>
+                  <SelectItem value="events">Événementiel</SelectItem>
+                  <SelectItem value="appointments">Services</SelectItem>
+                  <SelectItem value="public_services">Administration</SelectItem>
+                  <SelectItem value="transport">Livraison</SelectItem>
                   <SelectItem value="telecom">Télécom</SelectItem>
                 </SelectContent>
               </Select>

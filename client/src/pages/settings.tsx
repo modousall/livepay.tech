@@ -13,19 +13,6 @@ import {
   Zap,
   AlertCircle,
   Key,
-  CalendarClock,
-  Ticket,
-  UsersRound,
-  ShoppingBag,
-  GraduationCap,
-  Bus,
-  Wrench,
-  Building2,
-  HeartPulse,
-  Landmark,
-  ShieldCheck,
-  Wifi,
-  Lightbulb,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -53,7 +40,7 @@ import {
   updateUserProfile,
   type VendorConfig,
 } from "@/lib/firebase";
-import { BUSINESS_PROFILES, BUSINESS_PROFILE_ORDER, type BusinessProfileKey } from "@/lib/business-profiles";
+import { BUSINESS_PROFILES, type BusinessProfileKey } from "@/lib/business-profiles";
 
 // Settings locaux (localStorage)
 const SETTINGS_KEY = "livepay_vendor_settings";
@@ -113,7 +100,6 @@ export default function Settings() {
     mobileMoneyNumber: "",
     preferredPaymentMethod: "wave",
   });
-  const [businessSegment, setBusinessSegment] = useState<BusinessProfileKey>("shop");
   const [uiMode, setUiMode] = useState<"simplified" | "expert">("expert"); // Expert mode par défaut
 
   // Profile form state
@@ -141,7 +127,6 @@ export default function Settings() {
             mobileMoneyNumber: config.mobileMoneyNumber || "",
             preferredPaymentMethod: config.preferredPaymentMethod || "wave",
           });
-          setBusinessSegment((config.segment as BusinessProfileKey) || "shop");
           const configUiMode = (config.uiMode as "simplified" | "expert") || "expert";
           setUiMode(config.expertModeEnabled ? configUiMode : "expert"); // Expert mode par défaut
         }
@@ -210,7 +195,6 @@ export default function Settings() {
         await updateVendorConfig(vendorConfig.id, {
           ...chatbotConfig,
           ...mobileMoneyConfig,
-          segment: businessSegment,
           uiMode,
           expertModeEnabled: uiMode === "expert",
         });
@@ -222,7 +206,6 @@ export default function Settings() {
           ...mobileMoneyConfig,
           status: "active",
           liveMode: false,
-          segment: businessSegment,
           uiMode,
           expertModeEnabled: uiMode === "expert",
           allowQuantitySelection: true,
@@ -348,56 +331,14 @@ export default function Settings() {
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Choisissez votre type d'entite/prestataire pour personnaliser le dashboard et les parcours client.
+          Le secteur est dÃ©fini Ã  la crÃ©ation et ne peut pas Ãªtre modifiÃ©.
         </p>
 
         <div className="space-y-2">
-          <Label htmlFor="businessSegment">Type de profil</Label>
-          <Select value={businessSegment} onValueChange={(value) => setBusinessSegment(value as BusinessProfileKey)}>
-            <SelectTrigger id="businessSegment">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BUSINESS_PROFILE_ORDER.map((profileKey) => {
-                const profile = BUSINESS_PROFILES[profileKey];
-                const Icon =
-                  profileKey === "shop"
-                    ? ShoppingBag
-                    : profileKey === "events"
-                      ? Ticket
-                      : profileKey === "appointments"
-                        ? CalendarClock
-                        : profileKey === "queue_management"
-                          ? UsersRound
-                          : profileKey === "banking_microfinance"
-                            ? Landmark
-                            : profileKey === "insurance"
-                              ? ShieldCheck
-                              : profileKey === "telecom"
-                                ? Wifi
-                                : profileKey === "utilities"
-                                  ? Lightbulb
-                            : profileKey === "education"
-                              ? GraduationCap
-                              : profileKey === "transport"
-                                ? Bus
-                              : profileKey === "field_services"
-                                ? Wrench
-                                : profileKey === "rental"
-                                  ? Building2
-                                  : HeartPulse;
-
-                return (
-                  <SelectItem key={profileKey} value={profileKey}>
-                    <span className="flex items-center gap-2">
-                      <Icon className="w-4 h-4" />
-                      {profile.label}
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <Label>Secteur</Label>
+          <div className="rounded-md border px-3 py-2 text-sm">
+            {BUSINESS_PROFILES[(vendorConfig?.segment as BusinessProfileKey) || "shop"]?.label || "Boutique e-commerce"}
+          </div>
         </div>
 
         <Button onClick={handleChatbotSave} className="w-full" disabled={isSavingConfig}>
@@ -406,7 +347,7 @@ export default function Settings() {
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}
-          Enregistrer le profil metier
+          Enregistrer la configuration
         </Button>
       </Card>
 
@@ -728,7 +669,6 @@ export default function Settings() {
 // Export pour compatibilité
 export { loadSettings };
 export type { VendorSettings };
-
 
 
 
