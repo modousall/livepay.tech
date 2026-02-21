@@ -81,6 +81,8 @@ export default function PublicShopPage() {
 
   const heroTitle = data?.businessName || data?.name || "Catalogue";
   const waPhone = data?.phone?.replace(/\D/g, "");
+  const isShop = (data?.segment || "shop") === "shop";
+  const hasKeywords = (data?.products || []).some((p) => Boolean(p.keyword));
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.15),transparent_55%),radial-gradient(circle_at_top_right,rgba(14,116,144,0.2),transparent_55%),linear-gradient(180deg,rgba(10,10,10,0.95),rgba(10,10,10,0.98))] text-white">
@@ -95,7 +97,9 @@ export default function PublicShopPage() {
               {heroTitle}
             </h1>
             <p className="text-white/70 max-w-2xl">
-              Découvrez les produits, prix et codes WhatsApp. Envoyez simplement le code du produit pour commander.
+              {isShop
+                ? "Découvrez les produits, prix et codes WhatsApp. Envoyez simplement le code du produit pour commander."
+                : "Découvrez nos prestations et contactez-nous directement sur WhatsApp pour prendre rendez-vous ou demander un service."}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -119,9 +123,11 @@ export default function PublicShopPage() {
                 Numéro WhatsApp indisponible
               </Button>
             )}
-            <Badge className="bg-white/10 text-white/70 border border-white/10">
-              Codes produits disponibles
-            </Badge>
+            {hasKeywords && (
+              <Badge className="bg-white/10 text-white/70 border border-white/10">
+                Codes disponibles
+              </Badge>
+            )}
           </div>
         </div>
       </header>
@@ -170,6 +176,10 @@ export default function PublicShopPage() {
                   {filteredProducts.map((product) => {
                     const price = product.price?.toLocaleString("fr-FR");
                     const original = product.originalPrice?.toLocaleString("fr-FR");
+                    const hasStock = typeof product.stock === "number";
+                    const availableStock = hasStock
+                      ? Math.max(0, (product.stock || 0) - (product.reservedStock || 0))
+                      : null;
                     return (
                       <Card key={product.id} className="bg-white/5 border-white/10 overflow-hidden">
                         <div className="relative h-44 bg-white/10">
@@ -201,29 +211,53 @@ export default function PublicShopPage() {
                           {product.description ? (
                             <p className="text-sm text-white/60 line-clamp-2">{product.description}</p>
                           ) : null}
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-xl font-semibold text-emerald-300">
-                              {price} FCFA
-                            </span>
-                            {product.originalPrice && product.originalPrice > product.price ? (
-                              <span className="text-sm text-white/40 line-through">
-                                {original} FCFA
+                          {price ? (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-xl font-semibold text-emerald-300">
+                                {price} FCFA
                               </span>
-                            ) : null}
-                          </div>
-                          {waPhone && product.keyword ? (
-                            <Button
-                              asChild
-                              className="w-full mt-2 bg-white text-black hover:bg-white/90"
-                            >
-                              <a
-                                href={`https://wa.me/${waPhone}?text=${encodeURIComponent(product.keyword)}`}
-                                target="_blank"
-                                rel="noreferrer"
+                              {product.originalPrice && product.originalPrice > product.price ? (
+                                <span className="text-sm text-white/40 line-through">
+                                  {original} FCFA
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-white/60">Prix sur demande</div>
+                          )}
+                          {hasStock && (
+                            <div className="text-xs text-white/50">
+                              Stock: {availableStock} disponible(s)
+                            </div>
+                          )}
+                          {waPhone ? (
+                            product.keyword ? (
+                              <Button
+                                asChild
+                                className="w-full mt-2 bg-white text-black hover:bg-white/90"
                               >
-                                Envoyer le code {product.keyword}
-                              </a>
-                            </Button>
+                                <a
+                                  href={`https://wa.me/${waPhone}?text=${encodeURIComponent(product.keyword)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Envoyer le code {product.keyword}
+                                </a>
+                              </Button>
+                            ) : (
+                              <Button
+                                asChild
+                                className="w-full mt-2 bg-white text-black hover:bg-white/90"
+                              >
+                                <a
+                                  href={`https://wa.me/${waPhone}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Contacter sur WhatsApp
+                                </a>
+                              </Button>
+                            )
                           ) : null}
                         </div>
                       </Card>
@@ -231,8 +265,24 @@ export default function PublicShopPage() {
                   })}
                 </div>
               ) : (
-                <Card className="bg-white/5 border-white/10 p-8 text-center text-white/70">
-                  Aucun produit disponible pour le moment.
+                <Card className="bg-white/5 border-white/10 p-8 text-center text-white/70 space-y-3">
+                  <div>
+                    {isShop ? "Aucun produit disponible pour le moment." : "Aucun service public listé pour le moment."}
+                  </div>
+                  {waPhone && (
+                    <Button
+                      asChild
+                      className="bg-white text-black hover:bg-white/90 mx-auto"
+                    >
+                      <a
+                        href={`https://wa.me/${waPhone}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Contacter sur WhatsApp
+                      </a>
+                    </Button>
+                  )}
                 </Card>
               )}
             </>
