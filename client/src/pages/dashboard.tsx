@@ -246,7 +246,7 @@ export default function Dashboard() {
   
   // Onboarding state calculations
   const hasProducts = products.length > 0;
-  const hasPhone = true; // TODO: Check from config when available
+  const hasPhone = Boolean(config?.mobileMoneyNumber || user?.phone);
   const hasLiveMode = true;
   const recommendedMode = RECOMMENDED_MODE_BY_PROFILE[profileKey];
   const slaPreset = getSlaPreset(profileKey);
@@ -682,7 +682,6 @@ export default function Dashboard() {
     </div>
   );
 }
-
 
 
 
