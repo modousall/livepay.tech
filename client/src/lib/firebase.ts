@@ -27,7 +27,7 @@ import {
   limit,
   serverTimestamp
 } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Firebase configuration
@@ -1818,30 +1818,29 @@ export async function updatePlatformConfig(
  * Update user role (super admin only)
  */
 export async function updateUserRole(userId: string, role: "vendor" | "admin" | "superadmin"): Promise<void> {
-  const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, {
-    role,
-    updatedAt: serverTimestamp(),
-  });
+  const fn = httpsCallable(functions, "adminUpdateUserRole");
+  await fn({ userId, role });
 }
 
 /**
  * Delete user (super admin only)
  */
 export async function deleteUser(userId: string): Promise<void> {
-  const userRef = doc(db, "users", userId);
-  await deleteDoc(userRef);
+  const fn = httpsCallable(functions, "adminDeleteUser");
+  await fn({ userId });
 }
 
 /**
  * Suspend/Activate user (super admin only)
  */
 export async function toggleUserStatus(userId: string, suspended: boolean): Promise<void> {
-  const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, {
-    suspended,
-    updatedAt: serverTimestamp(),
-  });
+  const fn = httpsCallable(functions, "adminToggleUserStatus");
+  await fn({ userId, suspended });
+}
+
+export async function deleteEntity(entityId: string): Promise<void> {
+  const fn = httpsCallable(functions, "adminDeleteEntity");
+  await fn({ entityId });
 }
 
 /**
@@ -1880,4 +1879,3 @@ export async function purgePlatformKeepSuperAdmin(): Promise<{
     deletedByCollection: payload.deletedByCollection || {},
   };
 }
-

@@ -23,12 +23,12 @@ setGlobalOptions({
 const whatsapp = require("../lib/webhooks/whatsapp");
 const whatsappPro = require("../lib/webhooks/whatsapp-pro");
 const paymentProof = require("../lib/webhooks/payment-proof");
-const expireOrders = require("../lib/scheduled/expireOrders");
-const expireLiveReservations = require("../lib/scheduled/expireLiveReservations");
+const expireOrdersModule = require("../lib/scheduled/expireOrders");
+const expireLiveReservationsModule = require("../lib/scheduled/expireLiveReservations");
 const ordersTriggers = require("../lib/triggers/orders");
 const ordersServices = require("../lib/services/orders");
 const testWhatsapp = require("../lib/services/test-whatsapp");
-const storageProxy = require("../lib/services/storage-proxy");
+const storageProxyModule = require("../lib/services/storage-proxy");
 const purgePlatform = require("../lib/admin/purge-platform");
 const createEntity = require("../lib/admin/create-entity");
 
@@ -36,18 +36,24 @@ export const whatsappWebhook = whatsapp.whatsappWebhook;
 export const whatsappWebhookVerify = whatsapp.whatsappWebhookVerify;
 export const whatsappWebhookPro = whatsappPro.whatsappWebhookPro;
 export const whatsappPaymentProof = paymentProof.whatsappPaymentProof;
-export const expireOrders = expireOrders.expireOrders;
-export const expireOrdersManual = expireOrders.expireOrdersManual;
-export const expireLiveReservations = expireLiveReservations.expireLiveReservations;
+export const expireOrders = expireOrdersModule.expireOrders;
+export const expireOrdersManual = expireOrdersModule.expireOrdersManual;
+export const expireLiveReservations = expireLiveReservationsModule.expireLiveReservations;
 export const onOrderCreated = ordersTriggers.onOrderCreated;
 export const onOrderPaid = ordersTriggers.onOrderPaid;
 export const onProductStockEmpty = ordersTriggers.onProductStockEmpty;
 export const onUserDeleted = ordersTriggers.onUserDeleted;
 export const confirmPaymentManual = ordersServices.confirmPaymentManual;
 export const testWhatsAppConnection = testWhatsapp.testWhatsAppConnection;
-export const storageProxy = storageProxy.storageProxy;
+export const storageProxy = storageProxyModule.storageProxy;
 export const purgePlatformData = purgePlatform.purgePlatformData;
 export const createEntityWithAdmin = createEntity.createEntityWithAdmin;
 
 // New source function
 export { publicShop } from "./services/public-shop";
+export {
+  adminUpdateUserRole,
+  adminToggleUserStatus,
+  adminDeleteUser,
+  adminDeleteEntity,
+} from "./admin/superadmin";

@@ -81,6 +81,7 @@ import {
   updateUserProfile,
   toggleUserStatus,
   deleteUser,
+  deleteEntity,
   purgePlatformKeepSuperAdmin,
   type UserProfile,
   type Order,
@@ -134,6 +135,7 @@ export default function SuperAdmin() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteEntityDialog, setShowDeleteEntityDialog] = useState(false);
   const [newRole, setNewRole] = useState<"vendor" | "admin" | "superadmin">("vendor");
   const [newEntityId, setNewEntityId] = useState("");
   
@@ -340,6 +342,26 @@ export default function SuperAdmin() {
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'utilisateur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Delete entity
+  const handleDeleteEntity = async () => {
+    if (!selectedUser) return;
+    try {
+      const entityIdValue = selectedUser.entityId || selectedUser.id;
+      await deleteEntity(entityIdValue);
+      setVendors(vendors.filter(v => (v.entityId || v.id) !== entityIdValue));
+      toast({
+        title: "Entite supprimee",
+      });
+      setShowDeleteEntityDialog(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'entite",
         variant: "destructive",
       });
     }
@@ -649,6 +671,17 @@ export default function SuperAdmin() {
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedUser(vendor);
+                                setShowDeleteEntityDialog(true);
+                              }}
+                              title="Supprimer l'entite"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -882,6 +915,26 @@ export default function SuperAdmin() {
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteUser}>
                   Supprimer
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Entity Confirmation Dialog */}
+          <Dialog open={showDeleteEntityDialog} onOpenChange={setShowDeleteEntityDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Supprimer l'entite</DialogTitle>
+                <DialogDescription>
+                  Cette action supprime l'entite et toutes ses donnees. Continuer ?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowDeleteEntityDialog(false)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteEntity}>
+                  Supprimer l'entite
                 </Button>
               </DialogFooter>
             </DialogContent>
