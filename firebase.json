@@ -22,6 +22,10 @@
           "function": "expireOrdersManual"
         },
         {
+          "source": "/api/public-shop",
+          "function": "publicShop"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -67,6 +71,10 @@
         {
           "source": "/api/orders/expire",
           "function": "expireOrdersManual"
+        },
+        {
+          "source": "/api/public-shop",
+          "function": "publicShop"
         },
         {
           "source": "**",
