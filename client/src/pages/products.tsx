@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -171,14 +172,6 @@ export default function Products() {
   }, [editingProduct, open]);
 
   const handleOpenCreate = () => {
-    if (!entityId) {
-      toast({
-        title: "Erreur",
-        description: "Entité introuvable. Reconnectez-vous.",
-        variant: "destructive",
-      });
-      return;
-    }
     setEditingProduct(null);
     setFormData(defaultFormData);
     setOpen(true);
@@ -191,7 +184,14 @@ export default function Products() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!entityId) return;
+    if (!entityId) {
+      toast({
+        title: "Erreur",
+        description: "Entité introuvable. Reconnectez-vous.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Validation
     if (!formData.keyword.trim()) {
@@ -291,10 +291,12 @@ export default function Products() {
             Partager ma boutique
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
-            <Button type="button" onClick={handleOpenCreate} className="bg-green-600 hover:bg-green-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter
-            </Button>
+            <DialogTrigger asChild>
+              <Button type="button" onClick={handleOpenCreate} className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter
+              </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -613,4 +615,3 @@ export default function Products() {
     </div>
   );
 }
-
