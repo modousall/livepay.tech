@@ -18,6 +18,7 @@ type PublicProduct = {
   active?: boolean;
   stock?: number;
   reservedStock?: number;
+  category?: string;
 };
 
 type PublicShop = {
@@ -40,6 +41,20 @@ export default function PublicShopPage() {
   const [data, setData] = useState<PublicShop | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  const categories = useMemo(() => {
+    const list = (data?.products || [])
+      .map((p) => (p.category || "").trim())
+      .filter(Boolean);
+    return Array.from(new Set(list));
+  }, [data]);
+
+  const filteredProducts = useMemo(() => {
+    if (!data?.products) return [];
+    if (categoryFilter === "all") return data.products;
+    return data.products.filter((p) => (p.category || "") === categoryFilter);
+  }, [data, categoryFilter]);
 
   useEffect(() => {
     const load = async () => {
@@ -113,6 +128,27 @@ export default function PublicShopPage() {
 
       <main className="px-6 md:px-12 pb-16">
         <div className="max-w-6xl mx-auto">
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Button
+                variant={categoryFilter === "all" ? "default" : "outline"}
+                className={categoryFilter === "all" ? "bg-white text-black" : "border-white/20 text-white/70"}
+                onClick={() => setCategoryFilter("all")}
+              >
+                Tout
+              </Button>
+              {categories.map((cat) => (
+                <Button
+                  key={cat}
+                  variant={categoryFilter === cat ? "default" : "outline"}
+                  className={categoryFilter === cat ? "bg-white text-black" : "border-white/20 text-white/70"}
+                  onClick={() => setCategoryFilter(cat)}
+                >
+                  {cat}
+                </Button>
+              ))}
+            </div>
+          )}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -129,9 +165,9 @@ export default function PublicShopPage() {
             </Card>
           ) : (
             <>
-              {data?.products?.length ? (
+              {filteredProducts.length ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {data.products.map((product) => {
+                  {filteredProducts.map((product) => {
                     const price = product.price?.toLocaleString("fr-FR");
                     const original = product.originalPrice?.toLocaleString("fr-FR");
                     return (
@@ -157,6 +193,11 @@ export default function PublicShopPage() {
                         </div>
                         <div className="p-4 space-y-2">
                           <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+                          {product.category ? (
+                            <Badge className="bg-white/10 text-white/60 w-fit">
+                              {product.category}
+                            </Badge>
+                          ) : null}
                           {product.description ? (
                             <p className="text-sm text-white/60 line-clamp-2">{product.description}</p>
                           ) : null}

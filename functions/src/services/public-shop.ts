@@ -12,6 +12,7 @@ type PublicProduct = {
   active?: boolean;
   stock?: number;
   reservedStock?: number;
+  category?: string;
 };
 
 export const publicShop = onRequest(async (req, res) => {
@@ -83,6 +84,7 @@ export const publicShop = onRequest(async (req, res) => {
           active: data.active,
           stock: data.stock,
           reservedStock: data.reservedStock,
+          category: data.category,
         } as PublicProduct;
       })
       .filter((p) => p.active === true);

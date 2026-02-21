@@ -178,6 +178,10 @@ export default function Products() {
   };
 
   const handleOpenEdit = (product: Product) => {
+    if (product.vendorId && entityId && product.vendorId !== entityId) {
+      toast({ title: "Acces refuse", description: "Ce produit ne vous appartient pas.", variant: "destructive" });
+      return;
+    }
     setEditingProduct(product);
     setOpen(true);
   };
@@ -239,6 +243,11 @@ export default function Products() {
     
     setIsDeleting(productId);
     try {
+      const current = products.find((p) => p.id === productId);
+      if (current?.vendorId && current.vendorId !== entityId) {
+        toast({ title: "Acces refuse", description: "Ce produit ne vous appartient pas.", variant: "destructive" });
+        return;
+      }
       await deleteProduct(productId);
       toast({ title: "Offre supprimé" });
       const data = await getProducts(entityId);
