@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -172,6 +171,14 @@ export default function Products() {
   }, [editingProduct, open]);
 
   const handleOpenCreate = () => {
+    if (!entityId) {
+      toast({
+        title: "Erreur",
+        description: "Entité introuvable. Reconnectez-vous.",
+        variant: "destructive",
+      });
+      return;
+    }
     setEditingProduct(null);
     setFormData(defaultFormData);
     setOpen(true);
@@ -284,13 +291,11 @@ export default function Products() {
             Partager ma boutique
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenCreate} className="bg-green-600 hover:bg-green-700">
+            <Button type="button" onClick={handleOpenCreate} className="bg-green-600 hover:bg-green-700">
               <Plus className="w-4 h-4 mr-2" />
               Ajouter
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingProduct ? "Modifier le Offre" : "Nouveau Offre"}
@@ -495,7 +500,7 @@ export default function Products() {
                 )}
               </Button>
             </form>
-          </DialogContent>
+            </DialogContent>
           </Dialog>
         </div>
       </div>
@@ -608,5 +613,4 @@ export default function Products() {
     </div>
   );
 }
-
 
