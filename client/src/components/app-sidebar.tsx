@@ -68,13 +68,14 @@ export function AppSidebar() {
   const profileKey = (vendorConfig?.segment as BusinessProfileKey) || "shop";
   const profile = BUSINESS_PROFILES[profileKey] || BUSINESS_PROFILES.shop;
   const isExpertMode = (vendorConfig?.uiMode || "simplified") === "expert" && vendorConfig?.expertModeEnabled === true;
+  const isShopProfile = profileKey === "shop";
 
   const personaItems = useMemo(
     () =>
-      (isExpertMode ? allModuleIds : profile.essentialModules)
+      (isExpertMode && !isShopProfile ? allModuleIds : profile.essentialModules)
         .map((id) => personaNavMap[id])
         .filter(Boolean),
-    [profileKey, isExpertMode]
+    [profileKey, isExpertMode, isShopProfile]
   );
   const displayNavItems = isSuperAdminUser ? [] : [...baseNavItems, ...personaItems];
 
