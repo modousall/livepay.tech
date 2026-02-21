@@ -1,7 +1,7 @@
-const CACHE_NAME = 'livepay-v2';
-const STATIC_CACHE = 'livepay-static-v2';
-const DYNAMIC_CACHE = 'livepay-dynamic-v2';
-const DATA_CACHE = 'livepay-data-v2';
+const CACHE_NAME = 'livepay-v3';
+const STATIC_CACHE = 'livepay-static-v3';
+const DYNAMIC_CACHE = 'livepay-dynamic-v3';
+const DATA_CACHE = 'livepay-data-v3';
 
 const STATIC_ASSETS = [
   '/',
