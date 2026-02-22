@@ -1,0 +1,4 @@
+vendorId,businessName,phoneNumber,wasenderInstanceId,wasenderWebhookSecret,wasenderApiKey
+vendor_001,My Shop A,+221701111111,instance_abc123,secret_webhook_123,api_key_abc123
+vendor_002,My Shop B,+221702222222,instance_def456,secret_webhook_456,api_key_def456
+vendor_003,My Shop C,+221703333333,instance_ghi789,secret_webhook_789,api_key_ghi789

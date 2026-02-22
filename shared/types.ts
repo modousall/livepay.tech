@@ -165,6 +165,28 @@ export interface User {
 
 export type PublicUser = User; // No password in Firebase client SDK
 
+// ========== WABA (WhatsApp Business Account) - Multi-WABA Support ==========
+export interface WABAInstance {
+  id: string; // Unique WABA identifier
+  vendorId: string;
+  provider: "wasender" | "meta" | "unipile"; // Fournisseur WhatsApp
+  phoneNumber: string; // Numéro de téléphone du vendor (ex: +221701111111)
+  wasenderInstanceId?: string; // ID de l'instance Wasender
+  wasenderApiKey?: string; // API key Wasender pour cette instance
+  wasenderWebhookSecret?: string; // Secret pour valider les webhooks
+  metaPhoneNumberId?: string; // Meta Cloud API
+  metaAccessToken?: string;
+  unipileInstanceId?: string; // Unipile instance ID
+  unipileApiKey?: string;
+  status: "connected" | "disconnected" | "pending";
+  lastSync?: Date;
+  failoverProvider?: "wasender" | "meta" | "unipile"; // Fallback provider
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type InsertWABAInstance = Omit<WABAInstance, "id" | "createdAt" | "updatedAt">;
+
 // ========== VENDOR CONFIG ==========
 export type VendorStatus = "active" | "inactive" | "suspended";
 export type VendorSegment = "live_seller" | "shop" | "events" | "services" | "b2b";
@@ -175,9 +197,13 @@ export interface VendorConfig {
   businessName: string;
   mobileMoneyNumber?: string; // Phone number for receiving payments
   preferredPaymentMethod: string;
+  // Legacy Meta Cloud API fields
   whatsappPhoneNumberId?: string;
   whatsappAccessToken?: string;
   whatsappVerifyToken?: string;
+  // Multi-WABA support
+  wabaInstanceId?: string; // Reference to current WABA instance
+  wabaProvider?: "wasender" | "meta" | "unipile"; // Current provider
   status: VendorStatus;
   liveMode: boolean;
   reservationDurationMinutes: number;

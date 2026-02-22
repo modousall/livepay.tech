@@ -3,6 +3,13 @@ import { type Server } from "http";
 import type { Express } from "express";
 
 import { setupPaymentWebhooks } from "./lib/payment-webhooks";
+import {
+  handleVendorWasenderWebhook,
+  handleVendorWasenderStatus,
+  handleVendorWasenderConnection,
+  setupVendorWasenderWebhook,
+  getVendorWasenderStatus,
+} from "./lib/vendor-wasender-webhooks";
 
 /**
  * Minimal routes for development server
@@ -12,6 +19,7 @@ import { setupPaymentWebhooks } from "./lib/payment-webhooks";
  * - Health check endpoint
  * - WhatsApp webhook (to be moved to Firebase Cloud Functions for production)
  * - Payment webhooks (Wave, Orange Money, etc.)
+ * - Multi-WABA Wasender webhooks (vendor-specific)
  */
 
 export async function registerRoutes(
@@ -21,6 +29,45 @@ export async function registerRoutes(
 
   // Setup payment webhooks with idempotence
   setupPaymentWebhooks(app);
+
+  // Multi-WABA Wasender webhooks - vendor-specific
+  app.post(
+    "/api/webhooks/wasender/:vendorId",
+    (req, res, next) => {
+      handleVendorWasenderWebhook(req, res).catch(next);
+    }
+  );
+
+  // Webhook status notifications
+  app.post(
+    "/api/webhooks/wasender/:vendorId/status",
+    (req, res, next) => {
+      handleVendorWasenderStatus(req, res).catch(next);
+    }
+  );
+
+  // Webhook connection events
+  app.post(
+    "/api/webhooks/wasender/:vendorId/connection",
+    (req, res, next) => {
+      handleVendorWasenderConnection(req, res).catch(next);
+    }
+  );
+
+  // Admin endpoints for Wasender setup
+  app.post(
+    "/api/admin/vendors/:vendorId/setup-wasender-webhook",
+    (req, res, next) => {
+      setupVendorWasenderWebhook(req, res).catch(next);
+    }
+  );
+
+  app.get(
+    "/api/admin/vendors/:vendorId/wasender-status",
+    (req, res, next) => {
+      getVendorWasenderStatus(req, res).catch(next);
+    }
+  );
 
   // Health check endpoint
   app.get("/api/health", (_req, res) => {

@@ -10,22 +10,6 @@
       ],
       "rewrites": [
         {
-          "source": "/api/webhooks/whatsapp",
-          "function": "whatsappWebhook"
-        },
-        {
-          "source": "/api/webhooks/whatsapp/verify",
-          "function": "whatsappWebhookVerify"
-        },
-        {
-          "source": "/api/orders/expire",
-          "function": "expireOrdersManual"
-        },
-        {
-          "source": "/api/public-shop",
-          "function": "publicShop"
-        },
-        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -69,22 +53,6 @@
         "**/node_modules/**"
       ],
       "rewrites": [
-        {
-          "source": "/api/webhooks/whatsapp",
-          "function": "whatsappWebhook"
-        },
-        {
-          "source": "/api/webhooks/whatsapp/verify",
-          "function": "whatsappWebhookVerify"
-        },
-        {
-          "source": "/api/orders/expire",
-          "function": "expireOrdersManual"
-        },
-        {
-          "source": "/api/public-shop",
-          "function": "publicShop"
-        },
         {
           "source": "**",
           "destination": "/index.html"
