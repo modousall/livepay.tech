@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Settings, Shield, Crown, UsersRound, Clock, List, Ticket, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -31,22 +31,14 @@ const baseNavItems = [
 const personaNavMap: Record<PersonaModuleId, { title: string; url: string; icon: any }> = {
   products: { title: "Catalogue", url: "/products", icon: Package },
   orders: { title: "Ventes", url: "/orders", icon: ShoppingCart },
-  appointments: { title: "Agenda", url: "/modules/appointments", icon: LayoutDashboard },
-  queue: { title: "File d'attente", url: "/modules/queue", icon: LayoutDashboard },
-  ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: LayoutDashboard },
-  interventions: { title: "Interventions", url: "/modules/interventions", icon: LayoutDashboard },
+  appointments: { title: "Calendrier", url: "/modules/appointments", icon: Clock },
+  queue: { title: "File d'attente", url: "/modules/queue", icon: List },
+  ticketing: { title: "Billetterie", url: "/modules/ticketing", icon: Ticket },
+  interventions: { title: "Interventions", url: "/modules/interventions", icon: Wrench },
 };
 
 const adminItems = [{ title: "Admin", url: "/admin", icon: Shield }];
 const superAdminItems = [{ title: "Super Admin", url: "/super-admin", icon: Crown }];
-const allModuleIds: PersonaModuleId[] = [
-  "products",
-  "orders",
-  "appointments",
-  "queue",
-  "ticketing",
-  "interventions",
-];
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -67,15 +59,13 @@ export function AppSidebar() {
   const isSuperAdminUser = user?.email ? isSuperAdmin(user.email) : false;
   const profileKey = (vendorConfig?.segment as BusinessProfileKey) || "shop";
   const profile = BUSINESS_PROFILES[profileKey] || BUSINESS_PROFILES.shop;
-  const isExpertMode = (vendorConfig?.uiMode || "simplified") === "expert" && vendorConfig?.expertModeEnabled === true;
-  const isShopProfile = profileKey === "shop";
 
   const personaItems = useMemo(
     () =>
-      (isExpertMode && !isShopProfile ? allModuleIds : profile.essentialModules)
+      profile.essentialModules
         .map((id) => personaNavMap[id])
         .filter(Boolean),
-    [profileKey, isExpertMode, isShopProfile]
+    [profileKey]
   );
   const displayNavItems = isSuperAdminUser ? [] : [...baseNavItems, ...personaItems];
 
@@ -91,7 +81,7 @@ export function AppSidebar() {
           <span className="text-lg font-semibold tracking-tight">LIVE TECH</span>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          {isSuperAdminUser ? "Super Admin" : `Profil: ${profile.label} • ${isExpertMode ? "expert" : "simplifie"}`}
+          {isSuperAdminUser ? "Super Admin" : `Profil: ${profile.label}`}
         </p>
       </SidebarHeader>
       <SidebarContent>

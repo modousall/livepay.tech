@@ -1,7 +1,7 @@
 /**
  * Telecom Module
  * Services métier pour le secteur des télécommunications
- * 
+ *
  * Fonctionnalités:
  * - Gestion des abonnements
  * - Suivi de consommation (data, appels, SMS)
@@ -10,8 +10,8 @@
  * - Support technique (incidents réseau)
  */
 
-import { Timestamp, collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs, orderBy, increment, limit } from "firebase/firestore";
-import { db } from "../firebase";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 
 // Types d'abonnement
 export type SubscriptionType = "prepaid" | "postpaid" | "hybrid";
@@ -140,6 +140,8 @@ export interface NetworkIncident {
  * Service Telecom
  */
 export class TelecomService {
+  private db = admin.firestore();
+
   /**
    * Générer un numéro d'abonnement
    */
@@ -162,7 +164,7 @@ export class TelecomService {
       status: data.status || "active",
     };
 
-    const docRef = await addDoc(collection(db, "telecom_subscriptions"), {
+    const docRef = await this.db.collection("telecom_subscriptions").add({
       ...subscriptionData,
       activationDate: Timestamp.fromDate(subscriptionData.activationDate),
       expiryDate: Timestamp.fromDate(subscriptionData.expiryDate),
@@ -183,17 +185,15 @@ export class TelecomService {
    * Obtenir un abonnement par numéro
    */
   async getSubscriptionByNumber(subscriptionNumber: string): Promise<TelecomSubscription | null> {
-    const q = query(
-      collection(db, "telecom_subscriptions"),
-      where("subscriptionNumber", "==", subscriptionNumber)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("telecom_subscriptions")
+      .where("subscriptionNumber", "==", subscriptionNumber)
+      .get();
+
     if (snapshot.empty) return null;
 
     const doc = snapshot.docs[0];
     const data = doc.data();
-    
+
     return {
       id: doc.id,
       ...data,
@@ -208,13 +208,11 @@ export class TelecomService {
    * Obtenir les abonnements d'un client
    */
   async getClientSubscriptions(clientId: string, vendorId: string): Promise<TelecomSubscription[]> {
-    const q = query(
-      collection(db, "telecom_subscriptions"),
-      where("clientId", "==", clientId),
-      where("vendorId", "==", vendorId)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("telecom_subscriptions")
+      .where("clientId", "==", clientId)
+      .where("vendorId", "==", vendorId)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -234,32 +232,32 @@ export class TelecomService {
   async recordUsage(data: Omit<UsageRecord, "id" | "createdAt">): Promise<UsageRecord> {
     const now = Timestamp.now();
 
-    const docRef = await addDoc(collection(db, "telecom_usage"), {
+    const docRef = await this.db.collection("telecom_usage").add({
       ...data,
       timestamp: Timestamp.fromDate(data.timestamp),
       createdAt: now,
     });
 
     // Mettre à jour l'abonnement
-    const subscriptionRef = doc(db, "telecom_subscriptions", data.subscriptionId);
+    const subscriptionRef = this.db.doc(`telecom_subscriptions/${data.subscriptionId}`);
     const updateData: any = {
       updatedAt: now,
     };
 
     if (data.serviceType === "data" && data.dataUsed) {
-      updateData["usage.dataUsed"] = increment(data.dataUsed);
+      updateData["usage.dataUsed"] = admin.firestore.FieldValue.increment(data.dataUsed);
     } else if (data.serviceType === "voice" && data.duration) {
-      updateData["usage.voiceUsed"] = increment(data.duration / 60); // Convert to minutes
+      updateData["usage.voiceUsed"] = admin.firestore.FieldValue.increment(data.duration / 60); // Convert to minutes
     } else if (data.serviceType === "sms" && data.smsCount) {
-      updateData["usage.smsUsed"] = increment(data.smsCount);
+      updateData["usage.smsUsed"] = admin.firestore.FieldValue.increment(data.smsCount);
     }
 
     // Déduire le coût du solde
     if (data.cost > 0) {
-      updateData.balance = increment(-data.cost);
+      updateData.balance = admin.firestore.FieldValue.increment(-data.cost);
     }
 
-    await updateDoc(subscriptionRef, updateData);
+    await subscriptionRef.update(updateData);
 
     return {
       ...data,
@@ -279,7 +277,7 @@ export class TelecomService {
       status: "pending" as const,
     };
 
-    const docRef = await addDoc(collection(db, "telecom_topups"), {
+    const docRef = await this.db.collection("telecom_topups").add({
       ...topUpData,
       expiryDate: data.expiryDate ? Timestamp.fromDate(data.expiryDate) : null,
       processedAt: null,
@@ -302,33 +300,36 @@ export class TelecomService {
    * Traiter une recharge
    */
   async processTopUp(topUpId: string, vendorId: string): Promise<void> {
-    const topUpRef = doc(db, "telecom_topups", topUpId);
-    const topUpSnap = await getDoc(topUpRef);
+    const topUpRef = this.db.doc(`telecom_topups/${topUpId}`);
+    const topUpSnap = await topUpRef.get();
 
-    if (!topUpSnap.exists()) {
+    if (!topUpSnap.exists) {
       throw new Error("Recharge introuvable");
     }
 
     const topUpData = topUpSnap.data();
+    if (!topUpData) {
+      throw new Error("Données de recharge introuvables");
+    }
     if (topUpData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    const subscriptionRef = doc(db, "telecom_subscriptions", topUpData.subscriptionId);
-    
+    const subscriptionRef = this.db.doc(`telecom_subscriptions/${topUpData.subscriptionId}`);
+
     // Créditer le solde
     const updateData: any = {
       updatedAt: Timestamp.now(),
     };
 
     if (topUpData.type === "main") {
-      updateData.balance = increment(topUpData.amount);
+      updateData.balance = admin.firestore.FieldValue.increment(topUpData.amount);
     } else if (topUpData.type === "bonus") {
-      updateData.bonusBalance = increment(topUpData.amount);
+      updateData.bonusBalance = admin.firestore.FieldValue.increment(topUpData.amount);
     }
 
-    await updateDoc(subscriptionRef, updateData);
-    await updateDoc(topUpRef, {
+    await subscriptionRef.update(updateData);
+    await topUpRef.update({
       status: "completed",
       processedAt: Timestamp.now(),
     });
@@ -342,26 +343,32 @@ export class TelecomService {
     planId: string,
     vendorId: string
   ): Promise<void> {
-    const subscriptionRef = doc(db, "telecom_subscriptions", subscriptionId);
-    const subscriptionSnap = await getDoc(subscriptionRef);
+    const subscriptionRef = this.db.doc(`telecom_subscriptions/${subscriptionId}`);
+    const subscriptionSnap = await subscriptionRef.get();
 
-    if (!subscriptionSnap.exists()) {
+    if (!subscriptionSnap.exists) {
       throw new Error("Abonnement introuvable");
     }
 
     const subscriptionData = subscriptionSnap.data();
+    if (!subscriptionData) {
+      throw new Error("Données d'abonnement introuvables");
+    }
     if (subscriptionData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    const planRef = doc(db, "telecom_plans", planId);
-    const planSnap = await getDoc(planRef);
+    const planRef = this.db.doc(`telecom_plans/${planId}`);
+    const planSnap = await planRef.get();
 
-    if (!planSnap.exists()) {
+    if (!planSnap.exists) {
       throw new Error("Forfait introuvable");
     }
 
     const planData = planSnap.data();
+    if (!planData) {
+      throw new Error("Données de forfait introuvables");
+    }
 
     // Vérifier le solde
     if (subscriptionData.balance < planData.price) {
@@ -372,7 +379,7 @@ export class TelecomService {
     const now = Timestamp.now();
     const newExpiryDate = new Date(now.toDate().getTime() + planData.validity * 24 * 60 * 60 * 1000);
 
-    await updateDoc(subscriptionRef, {
+    await subscriptionRef.update({
       plan: {
         name: planData.name,
         dataAllowance: planData.benefits.data,
@@ -386,7 +393,7 @@ export class TelecomService {
         voiceUsed: 0,
         smsUsed: 0,
       },
-      balance: increment(-planData.price),
+      balance: admin.firestore.FieldValue.increment(-planData.price),
       expiryDate: Timestamp.fromDate(newExpiryDate),
       updatedAt: now,
     });
@@ -399,14 +406,12 @@ export class TelecomService {
     subscriptionId: string,
     limit: number = 50
   ): Promise<UsageRecord[]> {
-    const q = query(
-      collection(db, "telecom_usage"),
-      where("subscriptionId", "==", subscriptionId),
-      orderBy("timestamp", "desc"),
-      limit as any
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("telecom_usage")
+      .where("subscriptionId", "==", subscriptionId)
+      .orderBy("timestamp", "desc")
+      .limit(limit)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -422,14 +427,12 @@ export class TelecomService {
    * Obtenir les recharges d'un client
    */
   async getClientTopUps(clientId: string, vendorId: string): Promise<TopUp[]> {
-    const q = query(
-      collection(db, "telecom_topups"),
-      where("clientId", "==", clientId),
-      where("vendorId", "==", vendorId),
-      orderBy("createdAt", "desc")
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("telecom_topups")
+      .where("clientId", "==", clientId)
+      .where("vendorId", "==", vendorId)
+      .orderBy("createdAt", "desc")
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -448,7 +451,7 @@ export class TelecomService {
   async reportNetworkIncident(data: Omit<NetworkIncident, "id" | "createdAt" | "updatedAt">): Promise<NetworkIncident> {
     const now = Timestamp.now();
 
-    const docRef = await addDoc(collection(db, "network_incidents"), {
+    const docRef = await this.db.collection("network_incidents").add({
       ...data,
       resolvedAt: null,
       createdAt: now,
@@ -456,7 +459,7 @@ export class TelecomService {
     });
 
     // Créer un ticket CRM
-    await addDoc(collection(db, "crmTickets"), {
+    await this.db.collection("crmTickets").add({
       vendorId: data.vendorId,
       source: "telecom_network",
       sourceId: docRef.id,
@@ -492,19 +495,22 @@ export class TelecomService {
     vendorId: string,
     resolution: string
   ): Promise<void> {
-    const incidentRef = doc(db, "network_incidents", incidentId);
-    const incidentSnap = await getDoc(incidentRef);
+    const incidentRef = this.db.doc(`network_incidents/${incidentId}`);
+    const incidentSnap = await incidentRef.get();
 
-    if (!incidentSnap.exists()) {
+    if (!incidentSnap.exists) {
       throw new Error("Incident introuvable");
     }
 
     const incidentData = incidentSnap.data();
+    if (!incidentData) {
+      throw new Error("Données d'incident introuvables");
+    }
     if (incidentData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    await updateDoc(incidentRef, {
+    await incidentRef.update({
       status: "resolved",
       resolution,
       resolvedAt: Timestamp.now(),
@@ -516,12 +522,10 @@ export class TelecomService {
    * Obtenir les forfaits disponibles
    */
   async getTelecomPlans(vendorId: string, activeOnly: boolean = true): Promise<TelecomPlan[]> {
-    const q = query(
-      collection(db, "telecom_plans"),
-      where("vendorId", "==", vendorId)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("telecom_plans")
+      .where("vendorId", "==", vendorId)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -540,26 +544,32 @@ export class TelecomService {
     planId: string,
     vendorId: string
   ): Promise<{ eligible: boolean; reason?: string }> {
-    const subscriptionRef = doc(db, "telecom_subscriptions", subscriptionId);
-    const subscriptionSnap = await getDoc(subscriptionRef);
+    const subscriptionRef = this.db.doc(`telecom_subscriptions/${subscriptionId}`);
+    const subscriptionSnap = await subscriptionRef.get();
 
-    if (!subscriptionSnap.exists()) {
+    if (!subscriptionSnap.exists) {
       return { eligible: false, reason: "Abonnement introuvable" };
     }
 
     const subscriptionData = subscriptionSnap.data();
+    if (!subscriptionData) {
+      return { eligible: false, reason: "Données d'abonnement introuvables" };
+    }
     if (subscriptionData.vendorId !== vendorId) {
       return { eligible: false, reason: "Non autorisé" };
     }
 
-    const planRef = doc(db, "telecom_plans", planId);
-    const planSnap = await getDoc(planRef);
+    const planRef = this.db.doc(`telecom_plans/${planId}`);
+    const planSnap = await planRef.get();
 
-    if (!planSnap.exists()) {
+    if (!planSnap.exists) {
       return { eligible: false, reason: "Forfait introuvable" };
     }
 
     const planData = planSnap.data();
+    if (!planData) {
+      return { eligible: false, reason: "Données de forfait introuvables" };
+    }
 
     // Vérifier éligibilité
     if (planData.eligibility) {
@@ -567,7 +577,7 @@ export class TelecomService {
         return { eligible: false, reason: "Solde insuffisant" };
       }
 
-      if (planData.eligibility.subscriptionType && 
+      if (planData.eligibility.subscriptionType &&
           !planData.eligibility.subscriptionType.includes(subscriptionData.subscriptionType)) {
         return { eligible: false, reason: "Type d'abonnement non éligible" };
       }

@@ -97,26 +97,25 @@ const PROFILE_SLA_PRESETS: Partial<Record<BusinessProfileKey, SlaPreset[]>> = {
   field_services: [
     { module: "interventions", targetMinutesLow: 12 * 60, targetMinutesNormal: 4 * 60, targetMinutesHigh: 60, targetMinutesCritical: 20, escalationMinutes: 20 },
   ],
+  public_services: [
+    { module: "appointments", targetMinutesLow: 16 * 60, targetMinutesNormal: 6 * 60, targetMinutesHigh: 120, targetMinutesCritical: 20, escalationMinutes: 20 },
+    { module: "queue", targetMinutesLow: 6 * 60, targetMinutesNormal: 2 * 60, targetMinutesHigh: 45, targetMinutesCritical: 10, escalationMinutes: 10 },
+  ],
+  agriculture: [
+    { module: "appointments", targetMinutesLow: 16 * 60, targetMinutesNormal: 6 * 60, targetMinutesHigh: 120, targetMinutesCritical: 20, escalationMinutes: 20 },
+  ],
+  real_estate: [
+    { module: "appointments", targetMinutesLow: 16 * 60, targetMinutesNormal: 6 * 60, targetMinutesHigh: 120, targetMinutesCritical: 20, escalationMinutes: 20 },
+  ],
+  legal_notary: [
+    { module: "appointments", targetMinutesLow: 16 * 60, targetMinutesNormal: 6 * 60, targetMinutesHigh: 120, targetMinutesCritical: 20, escalationMinutes: 20 },
+  ],
 };
 
-const RECOMMENDED_MODE_BY_PROFILE: Record<BusinessProfileKey, "simplified" | "expert"> = {
-  shop: "simplified",
-  events: "simplified",
-  appointments: "simplified",
-  queue_management: "simplified",
-  banking_microfinance: "simplified",
-  insurance: "simplified",
-  telecom: "simplified",
-  utilities: "simplified",
-  education: "simplified",
-  transport: "simplified",
-  field_services: "expert",
-  rental: "simplified",
-  healthcare_private: "simplified",
-};
+// Mode expert supprimé - tous les profils utilisent maintenant le mode simplifié unifié
 
 const CRM_MODULE_LABELS: Record<CrmModule, string> = {
-  appointments: "Agenda",
+  appointments: "Calendrier",
   queue_management: "File d'attente",
   ticketing: "Billetterie",
   interventions: "Interventions",
@@ -124,6 +123,7 @@ const CRM_MODULE_LABELS: Record<CrmModule, string> = {
   insurance: "Assurance",
   telecom: "Telecom",
   utilities: "Energie / Eau",
+  queue: "File d'attente",
 };
 
 function getSlaPreset(profileKey: BusinessProfileKey): SlaPreset[] {
@@ -233,10 +233,8 @@ export default function Dashboard() {
   const recentOrders = orders.slice(0, 5);
   const profileKey = (config?.segment as BusinessProfileKey) || "shop";
   const profileMeta = BUSINESS_PROFILES[profileKey] || BUSINESS_PROFILES.shop;
-  const isExpertMode = (config?.uiMode || "simplified") === "expert" && config?.expertModeEnabled === true;
-  const moduleIds = isExpertMode
-    ? (Object.keys(PERSONA_MODULES) as Array<keyof typeof PERSONA_MODULES>)
-    : profileMeta.essentialModules;
+  // Mode expert supprimé - plateforme unifiée en mode simplifié
+  const moduleIds = profileMeta.essentialModules;
   const quickModules = moduleIds.slice(0, 3).map((id) => PERSONA_MODULES[id]);
   const openCrmCount = crmTickets.filter((t) => ["open", "in_progress", "waiting_customer"].includes(t.status)).length;
   const escalatedCount = crmTickets.filter((t) => t.status === "escalated" || t.escalated).length;
@@ -248,7 +246,7 @@ export default function Dashboard() {
   const hasProducts = products.length > 0;
   const hasPhone = Boolean(config?.mobileMoneyNumber || user?.phone);
   const hasLiveMode = true;
-  const recommendedMode = RECOMMENDED_MODE_BY_PROFILE[profileKey];
+  // Mode expert supprimé - mode simplifié par défaut
   const slaPreset = getSlaPreset(profileKey);
   const slaPreview = slaPreset.map((preset) => ({
     moduleLabel: CRM_MODULE_LABELS[preset.module],
@@ -264,21 +262,20 @@ export default function Dashboard() {
 
     if (localDone || remoteDone) return;
 
-    setContextualMode(recommendedMode);
     setShowContextualOnboarding(true);
-  }, [user, config, recommendedMode]);
+  }, [user, config]);
 
-  const markContextualOnboardingDone = async (uiModeToSave: "simplified" | "expert") => {
+  const markContextualOnboardingDone = async () => {
     if (!user || !config) return;
 
     const completedAt = new Date();
     await updateVendorConfig(config.id, {
       contextualOnboardingCompletedAt: completedAt,
-      uiMode: uiModeToSave,
+      // uiMode supprimé - mode simplifié par défaut
     });
     setConfig((prev) => (
       prev
-        ? { ...prev, uiMode: uiModeToSave, contextualOnboardingCompletedAt: completedAt }
+        ? { ...prev, contextualOnboardingCompletedAt: completedAt }
         : prev
     ));
 
@@ -304,11 +301,11 @@ export default function Dashboard() {
         )
       );
 
-      await markContextualOnboardingDone(contextualMode);
+      await markContextualOnboardingDone();
       setShowContextualOnboarding(false);
       toast({
         title: "Configuration appliquee",
-        description: "Mode recommande et SLA sectoriels actives.",
+        description: "SLA sectoriels actives.",
       });
     } catch (error) {
       console.error("Error applying contextual onboarding:", error);
@@ -327,8 +324,7 @@ export default function Dashboard() {
     setIsApplyingContextual(true);
 
     try {
-      const uiModeToKeep = (config.uiMode || recommendedMode) as "simplified" | "expert";
-      await markContextualOnboardingDone(uiModeToKeep);
+      await markContextualOnboardingDone();
       setShowContextualOnboarding(false);
     } catch (error) {
       console.error("Error skipping contextual onboarding:", error);
@@ -357,7 +353,7 @@ export default function Dashboard() {
       {showContextualOnboarding && (
         <ContextualOnboardingModal
           profileLabel={profileMeta.label}
-          recommendedMode={recommendedMode}
+          // recommendedMode supprimé - mode simplifié par défaut
           selectedMode={contextualMode}
           onModeChange={setContextualMode}
           slaPreview={slaPreview}
@@ -373,7 +369,7 @@ export default function Dashboard() {
       <div>
         <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">Tableau de bord</h1>
         <p className="text-muted-foreground">
-          LivePay - {profileMeta.subtitle} ({isExpertMode ? "mode expert" : "mode simplifie"})
+          LivePay - {profileMeta.subtitle}
         </p>
       </div>
 
@@ -395,9 +391,9 @@ export default function Dashboard() {
                 <CheckCircle className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Chatbot Actif 24/24</h2>
+                <h2 className="text-xl font-bold">Service WhatsApp Actif</h2>
                 <p className="text-sm text-muted-foreground">
-                  Le chatbot accepte les commandes WhatsApp en continu.
+                  Votre entité {profileMeta.label} est configurée et prête à recevoir des demandes.
                 </p>
               </div>
             </div>
@@ -640,45 +636,57 @@ export default function Dashboard() {
         </TabsContent>
       </Tabs>
 
-      {/* How it works */}
-      <Card className="bg-muted/50">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-green-600" />
-            Comment ça marche ?
-          </h3>
-          <div className="grid sm:grid-cols-4 gap-4 text-sm">
-            <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">1</span>
-              <div>
-                <p className="font-medium">Ajoutez vos offres</p>
-                <p className="text-muted-foreground">Avec un mot-clé simple (ROBE1)</p>
+      {/* How it works - only for relevant profiles */}
+      {(['shop', 'events', 'transport', 'rental'].includes(profileKey)) && (
+        <Card className="bg-muted/50">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-green-600" />
+              Comment ça marche ?
+            </h3>
+            <div className="grid sm:grid-cols-4 gap-4 text-sm">
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">1</span>
+                <div>
+                  <p className="font-medium">
+                    {profileKey === 'shop' ? 'Ajoutez vos offres' : 
+                     profileKey === 'events' ? 'Configurez les billets' :
+                     profileKey === 'transport' ? 'Ajoutez les trajets' :
+                     'Ajoutez disponibilités'}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {profileKey === 'shop' ? 'Avec un mot-clé simple (ROBE1)' :
+                     profileKey === 'events' ? 'Avec catégories et prix' :
+                     profileKey === 'transport' ? 'Horaires et capacité' :
+                     'Calendrier et créneaux'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">2</span>
+                <div>
+                  <p className="font-medium">Service WhatsApp actif</p>
+                  <p className="text-muted-foreground">Disponible en continu</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">3</span>
+                <div>
+                  <p className="font-medium">Clients envoient requête</p>
+                  <p className="text-muted-foreground">Sur WhatsApp → demande créée</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">4</span>
+                <div>
+                  <p className="font-medium">Paiement sécurisé</p>
+                  <p className="text-muted-foreground">Mobile money, Carte, Virement</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">2</span>
-              <div>
-                <p className="font-medium">Chatbot actif 24/24</p>
-                <p className="text-muted-foreground">Le chatbot reste actif 24/24</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">3</span>
-              <div>
-                <p className="font-medium">Clients envoient le mot-clé</p>
-                <p className="text-muted-foreground">Sur WhatsApp → demande créée</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">4</span>
-              <div>
-                <p className="font-medium">Paiement mobile money</p>
-                <p className="text-muted-foreground">Wave, Orange Money, Carte</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

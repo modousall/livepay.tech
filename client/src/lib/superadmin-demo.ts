@@ -4,8 +4,8 @@
  */
 
 import { Timestamp, collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
-import { VendorConfig } from "@shared/types";
+import { db } from "./firebase";
+import { VendorConfig, VendorSegment } from "@shared/types";
 
 // Données de démo par secteur
 const DEMO_DATA_BY_SECTOR = {
@@ -20,6 +20,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 60,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 50,
+      segment: "services" as VendorSegment,
     },
   },
   insurance: {
@@ -33,6 +34,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 45,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 60,
+      segment: "services" as VendorSegment,
     },
   },
   telecom: {
@@ -46,6 +48,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 15,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 30,
+      segment: "services" as VendorSegment,
     },
   },
   education: {
@@ -59,6 +62,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 45,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 40,
+      segment: "services" as VendorSegment,
     },
   },
   healthcare_private: {
@@ -72,6 +76,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 30,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 70,
+      segment: "services" as VendorSegment,
     },
   },
   agriculture: {
@@ -85,6 +90,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 60,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 40,
+      segment: "services" as VendorSegment,
     },
   },
   public_services: {
@@ -98,6 +104,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 30,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 50,
+      segment: "services" as VendorSegment,
     },
   },
   real_estate: {
@@ -111,6 +118,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 60,
       requireDeliveryAddress: true,
       minTrustScoreRequired: 60,
+      segment: "services" as VendorSegment,
     },
   },
   legal_notary: {
@@ -124,6 +132,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 60,
       requireDeliveryAddress: false,
       minTrustScoreRequired: 80,
+      segment: "services" as VendorSegment,
     },
   },
   shop: {
@@ -137,6 +146,7 @@ const DEMO_DATA_BY_SECTOR = {
       reservationDurationMinutes: 30,
       requireDeliveryAddress: true,
       minTrustScoreRequired: 0,
+      segment: "shop" as VendorSegment,
     },
   },
 };
@@ -174,7 +184,7 @@ export async function createDemoEntity(
   };
 
   // Créer d'abord le vendor config sans vendorId
-  const configRef = await addDoc(collection(db, "vendorConfigs"), {
+  const configRef = await addDoc(collection(db, "vendor_configs"), {
     ...configData,
     createdAt: now,
     updatedAt: now,
@@ -214,7 +224,7 @@ export async function createDemoEntity(
  */
 export async function getDemoEntities(superAdminId: string) {
   const q = query(
-    collection(db, "vendorConfigs"),
+    collection(db, "vendor_configs"),
     where("businessName", ">=", "Démo"),
     where("businessName", "<=", "Démo\uf8ff")
   );
@@ -245,7 +255,7 @@ export async function deleteDemoEntity(vendorId: string) {
   
   // Désactiver le config
   const configQuery = query(
-    collection(db, "vendorConfigs"),
+    collection(db, "vendor_configs"),
     where("vendorId", "==", vendorId)
   );
   

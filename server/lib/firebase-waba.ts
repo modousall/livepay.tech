@@ -1,21 +1,12 @@
 /**
  * Firebase WABA Integration
- * 
+ *
  * Gère la persistance des WABA Instances en Firestore
  * Utilisé par WABAManager pour les requêtes Firestore
  */
 
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { db } from "./firebase";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 import { WABAInstance } from "../../shared/types";
 import { logger } from "../logger";
 
@@ -30,8 +21,9 @@ export async function createWABAInstance(
 ): Promise<WABAInstance> {
   try {
     const now = new Date();
-    const docRef = doc(collection(db, WABA_INSTANCES_COLLECTION));
-    
+    const db = admin.firestore();
+    const docRef = db.collection(WABA_INSTANCES_COLLECTION).doc();
+
     const fullInstance: WABAInstance = {
       id: docRef.id,
       ...wabaInstance,
@@ -39,7 +31,7 @@ export async function createWABAInstance(
       updatedAt: now,
     };
 
-    await setDoc(docRef, {
+    await docRef.set({
       ...fullInstance,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -67,12 +59,10 @@ export async function findWABAByPhoneNumber(
   phoneNumber: string
 ): Promise<WABAInstance | null> {
   try {
-    const q = query(
-      collection(db, WABA_INSTANCES_COLLECTION),
-      where("phoneNumber", "==", phoneNumber)
-    );
-
-    const snapshot = await getDocs(q);
+    const db = admin.firestore();
+    const snapshot = await db.collection(WABA_INSTANCES_COLLECTION)
+      .where("phoneNumber", "==", phoneNumber)
+      .get();
 
     if (snapshot.empty) {
       return null;
@@ -101,12 +91,10 @@ export async function findWABAByWasenderInstanceId(
   wasenderInstanceId: string
 ): Promise<WABAInstance | null> {
   try {
-    const q = query(
-      collection(db, WABA_INSTANCES_COLLECTION),
-      where("wasenderInstanceId", "==", wasenderInstanceId)
-    );
-
-    const snapshot = await getDocs(q);
+    const db = admin.firestore();
+    const snapshot = await db.collection(WABA_INSTANCES_COLLECTION)
+      .where("wasenderInstanceId", "==", wasenderInstanceId)
+      .get();
 
     if (snapshot.empty) {
       return null;
@@ -134,12 +122,10 @@ export async function getVendorWABAInstances(
   vendorId: string
 ): Promise<WABAInstance[]> {
   try {
-    const q = query(
-      collection(db, WABA_INSTANCES_COLLECTION),
-      where("vendorId", "==", vendorId)
-    );
-
-    const snapshot = await getDocs(q);
+    const db = admin.firestore();
+    const snapshot = await db.collection(WABA_INSTANCES_COLLECTION)
+      .where("vendorId", "==", vendorId)
+      .get();
 
     return snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -164,9 +150,10 @@ export async function updateWABAInstance(
   updates: Partial<WABAInstance>
 ): Promise<void> {
   try {
-    const docRef = doc(db, WABA_INSTANCES_COLLECTION, id);
-    
-    await updateDoc(docRef, {
+    const db = admin.firestore();
+    const docRef = db.collection(WABA_INSTANCES_COLLECTION).doc(id);
+
+    await docRef.update({
       ...updates,
       updatedAt: new Date().toISOString(),
     });
@@ -189,18 +176,24 @@ export async function updateWABAInstance(
  */
 export async function getWABAInstance(id: string): Promise<WABAInstance | null> {
   try {
-    const docRef = doc(db, WABA_INSTANCES_COLLECTION, id);
-    const snapshot = await getDoc(docRef);
+    const db = admin.firestore();
+    const docRef = db.collection(WABA_INSTANCES_COLLECTION).doc(id);
+    const snapshot = await docRef.get();
 
-    if (!snapshot.exists()) {
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    const data = snapshot.data();
+    if (!data) {
       return null;
     }
 
     return {
       id: snapshot.id,
-      ...snapshot.data(),
-      createdAt: new Date(snapshot.data().createdAt),
-      updatedAt: new Date(snapshot.data().updatedAt),
+      ...data,
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
     } as WABAInstance;
   } catch (error) {
     logger.error("[WABA Firebase] Error getting instance", {
@@ -218,12 +211,10 @@ export async function getVendorConfigByWABA(
   wabaInstanceId: string
 ): Promise<any | null> {
   try {
-    const q = query(
-      collection(db, VENDOR_CONFIGS_COLLECTION),
-      where("wabaInstanceId", "==", wabaInstanceId)
-    );
-
-    const snapshot = await getDocs(q);
+    const db = admin.firestore();
+    const snapshot = await db.collection(VENDOR_CONFIGS_COLLECTION)
+      .where("wabaInstanceId", "==", wabaInstanceId)
+      .get();
 
     if (snapshot.empty) {
       return null;

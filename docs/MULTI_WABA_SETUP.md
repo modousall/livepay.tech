@@ -315,5 +315,6 @@ A: Non, fallback à memory cache automatique.
 
 Pour les questions sur l'intégration Wasender, consultez :
 - [Documentation Wasender](https://wasenderapi.com/docs)
-- Section AlloPermet dans ce repo
-- Firebase setup guide
+- [Guide de Déploiement](./DEPLOYMENT.md)
+- [API Endpoints](./API_WABA_ENDPOINTS.md)
+- [Firestore Schema](./FIRESTORE_SCHEMA.md)

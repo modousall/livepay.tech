@@ -100,7 +100,7 @@ export default function Settings() {
     mobileMoneyNumber: "",
     preferredPaymentMethod: "wave",
   });
-  const [uiMode, setUiMode] = useState<"simplified" | "expert">("expert"); // Expert mode par défaut
+  // Mode expert supprimé - mode simplifié par défaut
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -127,8 +127,7 @@ export default function Settings() {
             mobileMoneyNumber: config.mobileMoneyNumber || "",
             preferredPaymentMethod: config.preferredPaymentMethod || "wave",
           });
-          const configUiMode = (config.uiMode as "simplified" | "expert") || "expert";
-          setUiMode(config.expertModeEnabled ? configUiMode : "expert"); // Expert mode par défaut
+          // Mode expert supprimé - mode simplifié par défaut
         }
       } catch (error) {
         console.error("Error loading vendor config:", error);
@@ -195,8 +194,7 @@ export default function Settings() {
         await updateVendorConfig(vendorConfig.id, {
           ...chatbotConfig,
           ...mobileMoneyConfig,
-          uiMode,
-          expertModeEnabled: uiMode === "expert",
+          // uiMode et expertModeEnabled supprimés - mode simplifié par défaut
         });
       } else {
         const newConfig = await createVendorConfig({
@@ -206,14 +204,14 @@ export default function Settings() {
           ...mobileMoneyConfig,
           status: "active",
           liveMode: false,
-          uiMode,
-          expertModeEnabled: uiMode === "expert",
+          // uiMode et expertModeEnabled supprimés - mode simplifié par défaut
           allowQuantitySelection: true,
           requireDeliveryAddress: false,
           autoReplyEnabled: true,
           autoReminderEnabled: true,
           upsellEnabled: false,
           minTrustScoreRequired: 0,
+          segment: "shop",
         });
         setVendorConfig(newConfig);
       }
@@ -348,36 +346,6 @@ export default function Settings() {
             <Save className="w-4 h-4 mr-2" />
           )}
           Enregistrer la configuration
-        </Button>
-      </Card>
-
-      <Card className="p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-500" />
-          <h2 className="font-semibold">Mode interface</h2>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Mode simplifie: uniquement les parcours essentiels du secteur. Mode expert: tous les modules visibles.
-        </p>
-        <div className="space-y-2">
-          <Label htmlFor="uiMode">Affichage</Label>
-          <Select value={uiMode} onValueChange={(value) => setUiMode(value as "simplified" | "expert")}>
-            <SelectTrigger id="uiMode">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="simplified">Mode simplifie (Recommande)</SelectItem>
-              <SelectItem value="expert">Mode expert</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={handleChatbotSave} className="w-full" disabled={isSavingConfig}>
-          {isSavingConfig ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Enregistrer le mode d'interface
         </Button>
       </Card>
 

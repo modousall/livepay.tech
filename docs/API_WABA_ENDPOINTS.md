@@ -1,18 +1,24 @@
-bash script/test-waba-webhook.sh1️⃣  npm run check         (Vérifier code)
-2️⃣  npm run build         (Builder local)
-3️⃣  npm run deploy:all    (Déployer production)
-4️⃣  curl https://...     (Tester)
-5️⃣  gcloud functions...  (Vérifier logs)# API Endpoints - Multi-WABA Management
+# API Endpoints - Multi-WABA Management
+
+**Dernière mise à jour:** Février 2026  
+**Base URL:** https://livepay.tech
+
+---
 
 ## 🔐 Authentication
 
 Tous les endpoints admin nécessitent une authentification Firebase (Token Bearer ou User session).
 
-## Endpoints Webhook
+---
 
-### POST /api/webhooks/wasender/:vendorId
+## Webhooks Endpoints
 
-Reçoit les messages entrants d'un vendor.
+### POST `/api/webhooks/wasender/:vendorId`
+
+Reçoit les messages WhatsApp entrants d'un vendor.
+
+**Paramètres:**
+- `vendorId` (path) - Identifiant unique du vendor
 
 **Headers:**
 ```
@@ -35,30 +41,50 @@ X-Wasender-Signature: hmac-sha256-signature
 }
 ```
 
-**Response:**
+**Response 200:**
 ```json
 {
-  "success": true
+  "status": "received",
+  "processId": "proc-123"
 }
+```
+
+**Exemple cURL:**
+```bash
+VENDOR_ID="vendor-001"
+WEBHOOK_SECRET="your-secret-key"
+BODY='{"type":"message","from":"+221705555555","message":"Hello vendor!"}'
+
+SIGNATURE=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | cut -d' ' -f2)
+
+curl -X POST https://livepay.tech/api/webhooks/wasender/$VENDOR_ID \
+  -H "Content-Type: application/json" \
+  -H "X-Wasender-Signature: $SIGNATURE" \
+  -d "$BODY"
 ```
 
 ---
 
-### POST /api/webhooks/wasender/:vendorId/status
+### POST `/api/webhooks/wasender/:vendorId/status`
 
-Reçoit les notifications de statut (livré, lu, etc).
+Reçoit les notifications de statut des messages (livré, lu, échoué).
+
+**Headers:**
+```
+Content-Type: application/json
+```
 
 **Body:**
 ```json
 {
   "event": "status",
   "messageId": "msg_12345",
-  "status": "delivered",
+  "status": "delivered|read|failed",
   "timestamp": 1708691334
 }
 ```
 
-**Response:**
+**Response 200:**
 ```json
 {
   "success": true
@@ -67,21 +93,26 @@ Reçoit les notifications de statut (livré, lu, etc).
 
 ---
 
-### POST /api/webhooks/wasender/:vendorId/connection
+### POST `/api/webhooks/wasender/:vendorId/connection`
 
-Reçoit les événements de connexion/déconnexion.
+Reçoit les événements de connexion/déconnexion des instances WABA.
+
+**Headers:**
+```
+Content-Type: application/json
+```
 
 **Body:**
 ```json
 {
   "event": "connection_status",
-  "status": "connected",
+  "status": "connected|disconnected|error",
   "phoneNumber": "+221701111111",
   "timestamp": 1708691434
 }
 ```
 
-**Response:**
+**Response 200:**
 ```json
 {
   "success": true
@@ -92,43 +123,69 @@ Reçoit les événements de connexion/déconnexion.
 
 ## Admin Endpoints
 
-### POST /api/admin/vendors/:vendorId/setup-wasender-webhook
+### POST `/api/admin/vendors/:vendorId/setup-wasender-webhook`
 
 Configure automatiquement le webhook Wasender pour un vendor.
 
-**Parameters:**
-- `vendorId` (string) : ID du vendor
+**Authentication:** Admin required
 
-**Response:**
+**Headers:**
+```
+Authorization: Bearer admin-token
+Content-Type: application/json
+```
+
+**Body:**
 ```json
 {
-  "success": true,
-  "message": "Webhook configured successfully",
-  "webhookUrl": "https://livepay.tech/api/webhooks/wasender/vendor_001"
+  "wasenderInstanceId": "instance-123",
+  "phoneNumber": "+221705555555",
+  "webhookSecret": "secret-key-123"
+}
+```
+
+**Response 200:**
+```json
+{
+  "status": "configured",
+  "webhookUrl": "https://livepay.tech/api/webhooks/wasender/vendor-001"
 }
 ```
 
 **Errors:**
 ```json
+// 404 Not Found
 {
   "error": "Vendor service not found"
+}
+
+// 401 Unauthorized
+{
+  "error": "Authentication required"
 }
 ```
 
 ---
 
-### GET /api/admin/vendors/:vendorId/wasender-status
+### GET `/api/admin/vendors/:vendorId/wasender-status`
 
 Obtient le statut actuel de l'instance Wasender d'un vendor.
 
-**Parameters:**
-- `vendorId` (string) : ID du vendor
+**Authentication:** Admin required
+
+**Headers:**
+```
+Authorization: Bearer admin-token
+```
 
 **Response (Connected):**
 ```json
 {
-  "status": "connected",
-  "phoneNumber": "+221701111111"
+  "vendorId": "vendor-001",
+  "phoneNumber": "+221705555555",
+  "status": "active",
+  "wasenderInstanceId": "instance-123",
+  "createdAt": "2024-01-01T00:00:00Z"
 }
 ```
 
@@ -148,11 +205,13 @@ Obtient le statut actuel de l'instance Wasender d'un vendor.
 
 ---
 
-## Firestore Endpoints (à créer)
+## Firestore Endpoints
 
-### GET /api/admin/vendors/:vendorId/waba-instances
+### GET `/api/admin/vendors/:vendorId/waba-instances`
 
 Obtenir toutes les instances WABA d'un vendor.
+
+**Authentication:** Admin required
 
 **Response:**
 ```json
@@ -175,9 +234,11 @@ Obtenir toutes les instances WABA d'un vendor.
 
 ---
 
-### GET /api/admin/vendors/:vendorId/waba/:wabaId
+### GET `/api/admin/vendors/:vendorId/waba/:wabaId`
 
-Obtenir les détails d'une instance WABA.
+Obtenir les détails d'une instance WABA spécifique.
+
+**Authentication:** Admin required
 
 **Response:**
 ```json
@@ -196,9 +257,17 @@ Obtenir les détails d'une instance WABA.
 
 ---
 
-### PUT /api/admin/vendors/:vendorId/waba/:wabaId
+### PUT `/api/admin/vendors/:vendorId/waba/:wabaId`
 
 Mettre à jour une instance WABA.
+
+**Authentication:** Admin required
+
+**Headers:**
+```
+Authorization: Bearer admin-token
+Content-Type: application/json
+```
 
 **Body:**
 ```json
@@ -219,9 +288,11 @@ Mettre à jour une instance WABA.
 
 ---
 
-### DELETE /api/admin/vendors/:vendorId/waba/:wabaId
+### DELETE `/api/admin/vendors/:vendorId/waba/:wabaId`
 
 Supprimer une instance WABA.
+
+**Authentication:** Admin required
 
 **Response:**
 ```json
@@ -235,9 +306,17 @@ Supprimer une instance WABA.
 
 ---
 
-### POST /api/admin/vendors/:vendorId/switch-provider
+### POST `/api/admin/vendors/:vendorId/switch-provider`
 
 Basculer d'un provider à l'autre (Wasender → Meta, etc).
+
+**Authentication:** Admin required
+
+**Headers:**
+```
+Authorization: Bearer admin-token
+Content-Type: application/json
+```
 
 **Body:**
 ```json
@@ -261,11 +340,13 @@ Basculer d'un provider à l'autre (Wasender → Meta, etc).
 
 ---
 
-## Statistics Endpoints (à créer)
+## Statistics Endpoints
 
-### GET /api/admin/analytics/waba-instances
+### GET `/api/admin/analytics/waba-instances`
 
 Obtenir des statistiques sur toutes les instances WABA.
+
+**Authentication:** Admin required
 
 **Response:**
 ```json
@@ -295,14 +376,16 @@ Obtenir des statistiques sur toutes les instances WABA.
 
 ---
 
-### GET /api/admin/analytics/vendor/:vendorId/messages
+### GET `/api/admin/analytics/vendor/:vendorId/messages`
 
 Obtenir les statistiques de messages pour un vendor.
 
+**Authentication:** Admin required
+
 **Query Parameters:**
-- `from` (ISO date) : Date de début
-- `to` (ISO date) : Date de fin
-- `status` (string) : "sent", "delivered", "read", "failed"
+- `from` (ISO date) - Date de début
+- `to` (ISO date) - Date de fin
+- `status` (string) - "sent", "delivered", "read", "failed"
 
 **Response:**
 ```json
@@ -371,13 +454,15 @@ Obtenir les statistiques de messages pour un vendor.
 
 ## Rate Limiting
 
-- **Global**: 100 requests/minute per API key
-- **Per Vendor**: 10 requests/second
-- **Webhook**: Unlimited (but should complete < 5s)
+| Type | Limit |
+|------|-------|
+| **Global** | 100 requests/minute per API key |
+| **Per Vendor** | 10 requests/second |
+| **Webhook** | Unlimited (mais doit compléter < 5s) |
 
 ---
 
-## Examples
+## Exemples
 
 ### cURL: Récupérer le statut Wasender
 
@@ -416,7 +501,7 @@ const result = await response.json();
 console.log(result);
 ```
 
-### Python: Tester webhook signature
+### Python: Vérifier signature webhook
 
 ```python
 import hmac
@@ -430,16 +515,23 @@ def verify_webhook(body, signature, secret):
         payload.encode(),
         hashlib.sha256
     ).hexdigest()
-    
+
     return hmac.compare_digest(signature, expected_sig)
 
-# Utilisation
+# Usage
 secret = "webhook_secret_xyz"
 body = {"event": "message", "data": {...}}
 signature = "abc123..."
 
 is_valid = verify_webhook(body, signature, secret)
 print(f"Webhook signature valid: {is_valid}")
+```
+
+### Bash: Générer signature HMAC
+
+```bash
+BODY='{"type":"message","from":"+221705555555"}'
+SIGNATURE=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "secret-key" | cut -d' ' -f2)
 ```
 
 ---
@@ -456,4 +548,8 @@ print(f"Webhook signature valid: {is_valid}")
 
 ## Support & Troubleshooting
 
-Voir [MULTI_WABA_SETUP.md](./MULTI_WABA_SETUP.md) pour plus de détails.
+- 📚 Guide de déploiement: [docs/DEPLOYMENT.md](./DEPLOYMENT.md)
+- 📚 Architecture Multi-WABA: [docs/MULTI_WABA_SETUP.md](./MULTI_WABA_SETUP.md)
+- 📚 Firestore Schema: [docs/FIRESTORE_SCHEMA.md](./FIRESTORE_SCHEMA.md)
+
+**Contact:** contact@livepay.tech

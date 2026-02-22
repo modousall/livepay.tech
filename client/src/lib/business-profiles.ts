@@ -63,7 +63,7 @@ export const PERSONA_MODULES: Record<PersonaModuleId, PersonaModuleDefinition> =
   },
   appointments: {
     id: "appointments",
-    title: "Agenda",
+    title: "Calendrier",
     path: "/modules/appointments",
     desc: "Creneaux, confirmations et suivi",
   },
@@ -108,9 +108,9 @@ export const BUSINESS_PROFILES: Record<BusinessProfileKey, BusinessProfileDefini
   shop: {
     key: "shop",
     label: "Boutique e-commerce",
-    subtitle: "Commerce e-commerce",
+    subtitle: "Commerce en ligne avec stock",
     botHint: "Clients: envoyez le code produit (ex: ROBE1) pour commander.",
-    highlights: ["Catalogue produit", "Paiement mobile", "Suivi livraison"],
+    highlights: ["Catalogue & Stock", "Paiement mobile", "Suivi livraison"],
     essentialModules: ["products", "orders"],
     controlTowerLabels: {
       openWorkLabel: "Ventes en cours",

@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { getOrders, getProducts, updateOrder, type Order, type Product } from "@/lib/firebase";
+import { getOrders, getProducts, updateOrder, getVendorConfig, type Order, type Product, type OrderStatus } from "@/lib/firebase";
 import { exportOrdersToCSV } from "@/lib/export-utils";
 
-const statusConfig: Record<string, { label: string; color: string; icon: any; nextAction?: string }> = {
+const statusConfig: Record<OrderStatus, { label: string; color: string; icon: any; nextAction?: OrderStatus }> = {
   pending: { label: "En attente", color: "bg-yellow-500", icon: Clock, nextAction: "paid" },
   reserved: { label: "Réservé", color: "bg-blue-500", icon: AlertCircle, nextAction: "paid" },
   paid: { label: "Payé", color: "bg-green-500", icon: CheckCircle, nextAction: "shipped" },
@@ -175,6 +175,8 @@ export default function Orders() {
 
   // ✅ INNOVATION: Envoyer notification GPS au client
   const sendGPSNotification = async (order: Order) => {
+    if (!entityId) return;
+    
     try {
       // Obtenir position GPS actuelle
       const position = await getCurrentPosition();

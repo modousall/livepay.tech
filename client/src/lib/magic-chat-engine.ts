@@ -39,6 +39,8 @@ export interface MagicResponse {
   buttons?: MagicButton[];
   followUp?: string;
   delay?: number; // ms avant envoi
+  requiresHuman?: boolean;
+  priority?: "low" | "normal" | "high" | "critical";
 }
 
 export interface MagicAction {

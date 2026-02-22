@@ -1,7 +1,7 @@
 /**
  * WhatsApp Chatbot Orchestration Service
  * Gère le routage des messages entre Meta WhatsApp Cloud API et Wasender
- * 
+ *
  * Architecture:
  * - Routeur principal: choisit entre Meta et Wasender
  * - Fallback automatique: si Meta échoue → Wasender
@@ -9,8 +9,8 @@
  * - Handlers métier: traite les messages par secteur
  */
 
-import { Timestamp, collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 
 // Types de messages
 export type MessageDirection = "inbound" | "outbound";
@@ -168,11 +168,14 @@ export class WhatsAppOrchestrator {
 
       // 5. Envoyer la réponse
       if (response.message) {
+        // Map "buttons" type to "button" for OutboundMessage compatibility
+        const messageType = response.type === "buttons" ? "button" : response.type || "text";
+        
         await this.sendOutboundMessage(
           {
             to: message.from,
             message: {
-              type: response.type || "text",
+              type: messageType,
               text: response.message,
               buttons: response.buttons?.map(b => ({
                 type: "reply" as const,
@@ -360,14 +363,15 @@ export class WhatsAppOrchestrator {
     message: WhatsAppMessage
   ): Promise<ConversationContext> {
     const sessionId = `${vendorId}_${fromPhone}`;
-    
+    const db = admin.firestore();
+
     // Vérifier si la conversation existe
-    const contextRef = doc(db, "whatsapp_conversations", sessionId);
-    const contextSnap = await getDoc(contextRef);
+    const contextRef = db.doc(`whatsapp_conversations/${sessionId}`);
+    const contextSnap = await contextRef.get();
 
     let context: ConversationContext;
 
-    if (contextSnap.exists()) {
+    if (contextSnap.exists) {
       // Mettre à jour conversation existante
       const existing = contextSnap.data() as ConversationContext;
       context = {
@@ -390,12 +394,12 @@ export class WhatsAppOrchestrator {
     }
 
     // Sauvegarder le contexte
-    await updateDoc(contextRef, {
+    await contextRef.update({
       ...context,
       lastMessageAt: Timestamp.fromDate(context.lastMessageAt),
     }).catch(() => {
       // Créer si n'existe pas
-      addDoc(collection(db, "whatsapp_conversations"), {
+      db.collection("whatsapp_conversations").add({
         ...context,
         lastMessageAt: Timestamp.fromDate(context.lastMessageAt),
         createdAt: Timestamp.now(),
@@ -562,8 +566,9 @@ export class WhatsAppOrchestrator {
     vendorId: string
   ): Promise<void> {
     try {
+      const db = admin.firestore();
       // Créer un ticket CRM
-      await addDoc(collection(db, "crmTickets"), {
+      await db.collection("crmTickets").add({
         vendorId,
         source: "whatsapp",
         sourceId: message.from,
@@ -583,7 +588,7 @@ export class WhatsAppOrchestrator {
       });
 
       // Notifier les agents
-      await addDoc(collection(db, "notifications"), {
+      await db.collection("notifications").add({
         vendorId,
         type: "whatsapp_escalation",
         title: "Escalade WhatsApp",
@@ -608,7 +613,8 @@ export class WhatsAppOrchestrator {
     status: MessageStatus
   ): Promise<void> {
     try {
-      await addDoc(collection(db, "whatsapp_messages"), {
+      const db = admin.firestore();
+      await db.collection("whatsapp_messages").add({
         vendorId,
         direction,
         status,
@@ -632,7 +638,8 @@ export class WhatsAppOrchestrator {
     vendorId: string
   ): Promise<void> {
     try {
-      await addDoc(collection(db, "whatsapp_analytics"), {
+      const db = admin.firestore();
+      await db.collection("whatsapp_analytics").add({
         vendorId,
         date: Timestamp.now(),
         intent: response.intent,
@@ -649,14 +656,13 @@ export class WhatsAppOrchestrator {
    */
   private async getVendorConfig(vendorId: string): Promise<any> {
     try {
-      const q = query(
-        collection(db, "vendorConfigs"),
-        where("vendorId", "==", vendorId)
-      );
-      const snapshot = await getDocs(q);
-      
+      const db = admin.firestore();
+      const snapshot = await db.collection("vendor_configs")
+        .where("vendorId", "==", vendorId)
+        .get();
+
       if (snapshot.empty) return null;
-      
+
       const doc = snapshot.docs[0];
       return { id: doc.id, ...doc.data() };
     } catch (error) {

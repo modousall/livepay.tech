@@ -12,6 +12,8 @@ import {
   VendorWasenderService,
 } from "./vendor-wasender-service";
 import { getWABAManager } from "./waba-manager";
+import { createWhatsAppOrchestrator, DEFAULT_ORCHESTRATOR_CONFIG } from "./whatsapp-orchestrator";
+import { db } from "../firebase";
 
 /**
  * Webhook handler pour les messages entrants d'un vendor
@@ -218,32 +220,37 @@ async function processVendorWhatsAppMessage(
   });
 
   try {
-    // 1. Obtenir la config du vendor
-    // const vendorConfig = await getVendorConfig(vendorId);
-
+    // 1. Initialiser l'orchestrator
+    const orchestrator = createWhatsAppOrchestrator(DEFAULT_ORCHESTRATOR_CONFIG);
+    
     // 2. Sauvegarder le message entrant en Firestore
-    // await db.collection("vendor_messages").add({
-    //   vendorId,
-    //   from,
-    //   message,
-    //   messageId,
-    //   type,
-    //   timestamp: new Date(timestamp),
-    //   status: "received",
-    //   createdAt: new Date()
-    // });
+    await db.collection("vendor_messages").add({
+      vendorId,
+      from,
+      message,
+      messageId,
+      type,
+      timestamp: new Date(parseInt(timestamp) * 1000),
+      status: "received",
+      createdAt: new Date()
+    });
 
-    // 3. Router vers AlloPermet
-    // await orchestrator.handleIncomingMessage(message, vendorId, from);
-
-    // 4. Optionnel: Envoyer une réponse automatique
-    // if (vendorConfig.autoReplyEnabled && vendorConfig.welcomeMessage) {
-    //   const registry = getVendorWasenderRegistry();
-    //   const service = registry.getExistingService(vendorId);
-    //   if (service) {
-    //     await service.sendMessage(from, vendorConfig.welcomeMessage);
-    //   }
-    // }
+    // 3. Router vers AlloPermet magic-chat-engine
+    // Créer l'objet message attendu par l'orchestrator
+    const whatsappMessage: any = {
+      from,
+      message,
+      messageId,
+      timestamp: new Date(parseInt(timestamp) * 1000).toISOString(),
+      type: type as any,
+    };
+    
+    await orchestrator.handleIncomingMessage(whatsappMessage, vendorId);
+    
+    logger.info("[VENDOR MESSAGE PROCESS] Orchestrator called", {
+      vendorId,
+      messageId,
+    });
 
     logger.info("[VENDOR MESSAGE PROCESS] Completed", {
       vendorId,
@@ -253,8 +260,8 @@ async function processVendorWhatsAppMessage(
     logger.error("[VENDOR MESSAGE PROCESS] Error", {
       vendorId,
       messageId,
-      error:
-        error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined
     });
   }
 }

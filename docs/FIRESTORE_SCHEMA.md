@@ -1,4 +1,8 @@
-# Firestore Multi-WABA Schema Guide
+# Firestore Multi-WABA Schema
+
+**Dernière mise à jour:** Février 2026
+
+---
 
 ## Collections Structure
 
@@ -9,18 +13,20 @@ Stocke la configuration de chaque WABA instance par vendeur.
 **Document ID:** `{vendorId}`
 
 **Fields:**
+
 | Field | Type | Description |
-|-------|------|---|
+|-------|------|-------------|
 | `vendorId` | string | Identifiant unique du vendeur |
 | `phoneNumber` | string | Numéro WhatsApp (ex: +221705555555) |
 | `wasenderInstanceId` | string | ID Wasender instance |
 | `webhookSecret` | string | Secret pour signature HMAC |
-| `provider` | string | Toujours "wasender" |
+| `provider` | string | "wasender" (ou autre provider) |
 | `status` | string | "active" \| "inactive" \| "error" |
 | `createdAt` | timestamp | Date création |
 | `updatedAt` | timestamp | Dernière modification |
 
 **Example:**
+
 ```json
 {
   "vendorId": "vendor-001",
@@ -43,15 +49,7 @@ Configuration générale du vendeur (existante, étendue).
 **Document ID:** `{vendorId}`
 
 **New Fields:**
-```json
-{
-  "wabaInstanceId": "waba-001",     // NEW
-  "wabaProvider": "wasender",        // NEW
-  ...existing_fields
-}
-```
 
-**Example Addition:**
 ```json
 {
   "vendorId": "vendor-001",
@@ -65,9 +63,10 @@ Configuration générale du vendeur (existante, étendue).
 
 ---
 
-## Indexes Créés
+## Indexes
 
 ### Index 1: Phone Number Lookup
+
 ```
 Collection: waba_instances
 Fields: phoneNumber (Ascending)
@@ -76,6 +75,7 @@ Fields: phoneNumber (Ascending)
 Permet: `waba_instances.where('phoneNumber', '==', '+221705555555')`
 
 ### Index 2: Wasender Instance Lookup
+
 ```
 Collection: waba_instances
 Fields: wasenderInstanceId (Ascending)
@@ -84,6 +84,7 @@ Fields: wasenderInstanceId (Ascending)
 Permet: `waba_instances.where('wasenderInstanceId', '==', 'instance-123')`
 
 ### Index 3: Status Query
+
 ```
 Collection: waba_instances
 Fields: status (Ascending), createdAt (Descending)
@@ -95,26 +96,36 @@ Permet: `waba_instances.where('status', '==', 'active').orderBy('createdAt', 'de
 
 ## Firestore Rules
 
-```
+```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow vendor to read their own WABA config
-    match /waba_instances/{vendorId} {
-      allow read: if request.auth.uid == vendorId || 
-                     isAdmin(request.auth.uid);
-      allow write: if isAdmin(request.auth.uid);
+
+    // WABA Instances - Multi-WABA Support
+    match /waba_instances/{wabaId} {
+      // Admins peuvent lire/écrire
+      allow read, write: if request.auth.token.role == 'admin'
+                         || request.auth.token.role == 'super_admin';
+
+      // Vendors peuvent lire leurs propres WABAs
+      allow read: if resource.data.vendorId == request.auth.uid;
+
+      // Système peut lire (pour migration)
+      allow read: if request.auth.token.role == 'system';
     }
 
-    // Allow vendor to read their own config
+    // Vendor configs
     match /vendor_configs/{vendorId} {
-      allow read: if request.auth.uid == vendorId;
-      allow write: if isAdmin(request.auth.uid);
+      allow read: if request.auth.uid == vendorId
+                     || request.auth.token.role == 'admin';
+      allow write: if request.auth.token.role == 'admin';
     }
 
-    // Helper function
-    function isAdmin(uid) {
-      return exists(/databases/$(database)/documents/admins/$(uid));
+    // Webhook logs (audit trail)
+    match /waba_webhook_logs/{logId} {
+      allow write: if request.auth.token.role == 'system';
+      allow read: if request.auth.token.role == 'admin'
+                     || request.auth.token.role == 'super_admin';
     }
   }
 }
@@ -125,6 +136,7 @@ service cloud.firestore {
 ## Queries Communes
 
 ### Find WABA by Vendor
+
 ```javascript
 firestore.collection('waba_instances')
   .doc(vendorId)
@@ -132,6 +144,7 @@ firestore.collection('waba_instances')
 ```
 
 ### Find WABA by Phone
+
 ```javascript
 firestore.collection('waba_instances')
   .where('phoneNumber', '==', phoneNumber)
@@ -140,6 +153,7 @@ firestore.collection('waba_instances')
 ```
 
 ### Find WABA by Wasender Instance ID
+
 ```javascript
 firestore.collection('waba_instances')
   .where('wasenderInstanceId', '==', wasenderInstanceId)
@@ -148,6 +162,7 @@ firestore.collection('waba_instances')
 ```
 
 ### List All Active WABAs
+
 ```javascript
 firestore.collection('waba_instances')
   .where('status', '==', 'active')
@@ -160,6 +175,7 @@ firestore.collection('waba_instances')
 ## Setup Scripts
 
 ### Create WABA Instance Manually
+
 ```bash
 firebase firestore:set waba_instances/vendor-001 \
   '{
@@ -175,14 +191,9 @@ firebase firestore:set waba_instances/vendor-001 \
 ```
 
 ### Create via Script
+
 ```bash
 npx tsx script/setup-waba-test.ts
-```
-
-### Batch Import
-```bash
-npm install firebase-admin
-node -e "const admin = require('firebase-admin'); ..."
 ```
 
 ---
@@ -190,12 +201,14 @@ node -e "const admin = require('firebase-admin'); ..."
 ## Backup & Restore
 
 ### Export Collection
+
 ```bash
 gcloud firestore export gs://bucket/backup/waba_instances \
   --collection-ids=waba_instances
 ```
 
 ### Import Collection
+
 ```bash
 gcloud firestore import gs://bucket/backup/waba_instances
 ```
@@ -205,14 +218,25 @@ gcloud firestore import gs://bucket/backup/waba_instances
 ## Monitoring
 
 ### Check Collection Size
+
 ```bash
 firebase firestore:describe waba_instances
 ```
 
 ### Monitor Queries
+
 ```bash
 gcloud functions logs read -f | grep "waba_instances"
 ```
 
 ### Quota Usage
+
 Firebase Console → Firestore Database → Usage
+
+---
+
+## Voir aussi
+
+- [Guide UI Firestore](./FIRESTORE_UI_GUIDE.md) - Guide pas à pas pour créer des instances
+- [API WABA Endpoints](./API_WABA_ENDPOINTS.md) - Endpoints API
+- [Déploiement](./DEPLOYMENT.md) - Guide de déploiement complet

@@ -1,7 +1,7 @@
 /**
  * Banking & Microfinance Module
  * Services métier pour le secteur bancaire et microfinance
- * 
+ *
  * Fonctionnalités:
  * - Gestion des comptes
  * - Demandes de crédit
@@ -10,8 +10,8 @@
  * - Informations produits bancaires
  */
 
-import { Timestamp, collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs, orderBy } from "firebase/firestore";
-import { db } from "../firebase";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 
 // Types
 export type AccountType = "savings" | "checking" | "loan" | "investment";
@@ -115,19 +115,21 @@ export interface BankProduct {
  * Service Banking & Microfinance
  */
 export class BankingService {
+  private db = admin.firestore();
+
   /**
    * Créer un compte client
    */
   async createAccount(data: Omit<BankAccount, "id" | "createdAt" | "updatedAt">): Promise<BankAccount> {
     const now = Timestamp.now();
     const accountNumber = this.generateAccountNumber();
-    
+
     const accountData: Omit<BankAccount, "id" | "createdAt" | "updatedAt"> = {
       ...data,
       accountNumber,
     };
 
-    const docRef = await addDoc(collection(db, "bank_accounts"), {
+    const docRef = await this.db.collection("bank_accounts").add({
       ...accountData,
       openedAt: Timestamp.fromDate(accountData.openedAt),
       closedAt: accountData.closedAt ? Timestamp.fromDate(accountData.closedAt) : null,
@@ -147,18 +149,16 @@ export class BankingService {
    * Obtenir un compte par numéro
    */
   async getAccountByNumber(accountNumber: string): Promise<BankAccount | null> {
-    const q = query(
-      collection(db, "bank_accounts"),
-      where("accountNumber", "==", accountNumber),
-      orderBy("createdAt", "desc")
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("bank_accounts")
+      .where("accountNumber", "==", accountNumber)
+      .orderBy("createdAt", "desc")
+      .get();
+
     if (snapshot.empty) return null;
 
     const doc = snapshot.docs[0];
     const data = doc.data();
-    
+
     return {
       id: doc.id,
       ...data,
@@ -173,13 +173,11 @@ export class BankingService {
    * Obtenir les comptes d'un client
    */
   async getClientAccounts(clientId: string, vendorId: string): Promise<BankAccount[]> {
-    const q = query(
-      collection(db, "bank_accounts"),
-      where("clientId", "==", clientId),
-      where("vendorId", "==", vendorId)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("bank_accounts")
+      .where("clientId", "==", clientId)
+      .where("vendorId", "==", vendorId)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -198,13 +196,13 @@ export class BankingService {
    */
   async submitLoanApplication(data: Omit<LoanApplication, "id" | "createdAt" | "updatedAt" | "status">): Promise<LoanApplication> {
     const now = Timestamp.now();
-    
+
     const applicationData = {
       ...data,
       status: "pending" as LoanStatus,
     };
 
-    const docRef = await addDoc(collection(db, "loan_applications"), {
+    const docRef = await this.db.collection("loan_applications").add({
       ...applicationData,
       submittedAt: Timestamp.fromDate(applicationData.submittedAt),
       approvedAt: applicationData.approvedAt ? Timestamp.fromDate(applicationData.approvedAt) : null,
@@ -216,7 +214,7 @@ export class BankingService {
     });
 
     // Créer un ticket CRM pour suivi
-    await addDoc(collection(db, "crmTickets"), {
+    await this.db.collection("crmTickets").add({
       vendorId: data.vendorId,
       source: "banking",
       sourceId: docRef.id,
@@ -256,19 +254,22 @@ export class BankingService {
     totalAmount: number;
     notes?: string;
   }): Promise<void> {
-    const loanRef = doc(db, "loan_applications", loanId);
-    const loanSnap = await getDoc(loanRef);
+    const loanRef = this.db.doc(`loan_applications/${loanId}`);
+    const loanSnap = await loanRef.get();
 
-    if (!loanSnap.exists()) {
+    if (!loanSnap.exists) {
       throw new Error("Loan application not found");
     }
 
     const loanData = loanSnap.data();
+    if (!loanData) {
+      throw new Error("Loan data not found");
+    }
     if (loanData.vendorId !== vendorId) {
       throw new Error("Unauthorized");
     }
 
-    await updateDoc(loanRef, {
+    await loanRef.update({
       status: "approved",
       approvedAt: Timestamp.now(),
       interestRate: approvalData.interestRate,
@@ -291,19 +292,22 @@ export class BankingService {
    * Rejeter un crédit
    */
   async rejectLoan(loanId: string, vendorId: string, reason: string): Promise<void> {
-    const loanRef = doc(db, "loan_applications", loanId);
-    const loanSnap = await getDoc(loanRef);
+    const loanRef = this.db.doc(`loan_applications/${loanId}`);
+    const loanSnap = await loanRef.get();
 
-    if (!loanSnap.exists()) {
+    if (!loanSnap.exists) {
       throw new Error("Loan application not found");
     }
 
     const loanData = loanSnap.data();
+    if (!loanData) {
+      throw new Error("Loan data not found");
+    }
     if (loanData.vendorId !== vendorId) {
       throw new Error("Unauthorized");
     }
 
-    await updateDoc(loanRef, {
+    await loanRef.update({
       status: "rejected",
       rejectedAt: Timestamp.now(),
       notes: reason,
@@ -323,13 +327,13 @@ export class BankingService {
    */
   async createTransaction(data: Omit<BankTransaction, "id" | "createdAt">): Promise<BankTransaction> {
     const now = Timestamp.now();
-    
+
     const transactionData = {
       ...data,
       createdAt: now,
     };
 
-    const docRef = await addDoc(collection(db, "bank_transactions"), {
+    const docRef = await this.db.collection("bank_transactions").add({
       ...transactionData,
       processedAt: transactionData.processedAt ? Timestamp.fromDate(transactionData.processedAt) : null,
       createdAt: now,
@@ -351,14 +355,12 @@ export class BankingService {
    * Obtenir l'historique des transactions d'un compte
    */
   async getAccountTransactions(accountId: string, limit: number = 50): Promise<BankTransaction[]> {
-    const q = query(
-      collection(db, "bank_transactions"),
-      where("accountId", "==", accountId),
-      orderBy("createdAt", "desc"),
-      limit as any
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("bank_transactions")
+      .where("accountId", "==", accountId)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -374,12 +376,14 @@ export class BankingService {
    * Mettre à jour le solde d'un compte
    */
   private async updateAccountBalance(accountId: string, type: TransactionType, amount: number): Promise<void> {
-    const accountRef = doc(db, "bank_accounts", accountId);
-    const accountSnap = await getDoc(accountRef);
+    const accountRef = this.db.doc(`bank_accounts/${accountId}`);
+    const accountSnap = await accountRef.get();
 
-    if (!accountSnap.exists()) return;
+    if (!accountSnap.exists) return;
 
     const account = accountSnap.data();
+    if (!account) return;
+    
     let newBalance = account.balance || 0;
 
     switch (type) {
@@ -396,7 +400,7 @@ export class BankingService {
         break;
     }
 
-    await updateDoc(accountRef, {
+    await accountRef.update({
       balance: newBalance,
       updatedAt: Timestamp.now(),
     });
@@ -406,7 +410,7 @@ export class BankingService {
    * Envoyer une notification au client
    */
   private async sendNotification(clientPhone: string, data: any): Promise<void> {
-    await addDoc(collection(db, "notifications"), {
+    await this.db.collection("notifications").add({
       type: "banking",
       recipientPhone: clientPhone,
       ...data,
@@ -428,17 +432,10 @@ export class BankingService {
    * Obtenir les produits bancaires
    */
   async getBankProducts(vendorId: string, activeOnly: boolean = true): Promise<BankProduct[]> {
-    const q = query(
-      collection(db, "bank_products"),
-      where("vendorId", "==", vendorId)
-    );
-    
-    if (activeOnly) {
-      // Note: Firestore ne supporte pas multiple where sur le même champ
-      // Filtrer côté client si nécessaire
-    }
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("bank_products")
+      .where("vendorId", "==", vendorId)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {

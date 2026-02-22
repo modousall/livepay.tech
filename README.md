@@ -4,7 +4,20 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-modousall%2Flivetech-blue?logo=github)](https://github.com/modousall/livetech)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-blue)](package.json)
+[![Version](https://img.shields.io/badge/Version-2.0.0-blue)](package.json)
+
+---
+
+## 📊 Performance & Scalabilité
+
+| Métrique | Valeur |
+|----------|--------|
+| **Frontend Size** | 1.5 MB (394 KB gzipped) |
+| **Server Bundle** | 845 KB |
+| **Webhook Latency** | <1s |
+| **Cache Lookup** | O(1) avec Redis |
+| **Build Time** | <3s |
+| **Vendeurs Supportés** | >50 (Multi-WABA) |
 
 ---
 
@@ -87,6 +100,30 @@ npm run dev
 ---
 
 ## 🏗️ Architecture
+
+### Multi-WABA Architecture (v2.0)
+
+```
+LivePay Multi-WABA
+├── Client Layer
+│   ├── React Dashboard (vendeur)
+│   ├── Settings (configure WABA)
+│   └── Order Management
+├── API Layer (Express)
+│   ├── /api/webhooks/wasender/:vendorId
+│   ├── /api/admin/vendors/:vendorId/*
+│   └── /api/health
+├── Service Layer
+│   ├── WABAManager (Redis cache O(1))
+│   ├── VendorWasenderService (per-vendor)
+│   └── VendorWasenderWebhooks
+├── Data Layer
+│   ├── Firestore: waba_instances
+│   └── Firestore: vendor_configs
+└── External Services
+    ├── Wasender (Multi-WABA gateway)
+    └── Firebase (Hosting + Functions)
+```
 
 ### High-Level Overview
 
@@ -265,9 +302,12 @@ pm2 start npm --name "livetech" -- start
 
 | Document | Purpose |
 |----------|---------|
-| [docs/API.md](docs/API.md) | API endpoints |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment guide |
-| [docs/BOT_SCENARIOS.md](docs/BOT_SCENARIOS.md) | Bot configuration |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | **Guide de déploiement complet** |
+| [docs/API_WABA_ENDPOINTS.md](docs/API_WABA_ENDPOINTS.md) | API Multi-WABA endpoints |
+| [docs/API.md](docs/API.md) | API générale reference |
+| [docs/MULTI_WABA_SETUP.md](docs/MULTI_WABA_SETUP.md) | Architecture Multi-WABA |
+| [docs/FIRESTORE_SCHEMA.md](docs/FIRESTORE_SCHEMA.md) | Schéma Firestore |
+| [docs/FIRESTORE_UI_GUIDE.md](docs/FIRESTORE_UI_GUIDE.md) | Guide UI Firestore |
 
 ---
 

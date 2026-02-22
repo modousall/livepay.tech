@@ -79,6 +79,7 @@ import {
   updatePlatformConfig,
   updateUserRole,
   updateUserProfile,
+  updateVendorConfig,
   toggleUserStatus,
   deleteUser,
   deleteEntity,
@@ -136,8 +137,13 @@ export default function SuperAdmin() {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteEntityDialog, setShowDeleteEntityDialog] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [newRole, setNewRole] = useState<"vendor" | "admin" | "superadmin">("vendor");
   const [newEntityId, setNewEntityId] = useState("");
+  
+  // Order dialog
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
   
   useEffect(() => {
     if (!user || !user.email || !isSuperAdmin(user.email)) return;
@@ -349,19 +355,35 @@ export default function SuperAdmin() {
 
   // Delete entity
   const handleDeleteEntity = async () => {
-    if (!selectedUser) return;
-    try {
-      const entityIdValue = selectedUser.entityId || selectedUser.id;
-      await deleteEntity(entityIdValue);
-      setVendors(vendors.filter(v => (v.entityId || v.id) !== entityIdValue));
-      toast({
-        title: "Entite supprimee",
-      });
-      setShowDeleteEntityDialog(false);
-    } catch (error) {
+    if (!selectedUser) {
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer l'entite",
+        description: "Aucune entite selectionnee",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const entityIdValue = selectedUser.entityId || selectedUser.id;
+      console.log("[DELETE ENTITY] Deleting:", entityIdValue);
+      
+      await deleteEntity(entityIdValue);
+      
+      // Remove from local state
+      setVendors(vendors.filter(v => (v.entityId || v.id) !== entityIdValue));
+      
+      toast({
+        title: "Entite supprimee",
+        description: "L'entite et ses donnees ont ete supprimees",
+      });
+      setShowDeleteEntityDialog(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("[DELETE ENTITY] Error:", error);
+      toast({
+        title: "Erreur",
+        description: `Impossible de supprimer l'entite: ${(error as Error).message}`,
         variant: "destructive",
       });
     }
@@ -610,10 +632,37 @@ export default function SuperAdmin() {
                     {filteredVendors.map((vendor) => {
                       const config = vendorConfigs.get(vendor.id);
                       const productCount = products.filter(p => p.vendorId === vendor.id).length;
+                      
+                      const handleRowClick = () => {
+                        console.log("[DEBUG] Row clicked for vendor:", vendor.id, vendor.businessName);
+                        const profileData: Partial<UserProfile> = {
+                          ...vendor,
+                          displayName: vendor.businessName || vendor.firstName || vendor.displayName || "",
+                          businessName: vendor.businessName || config?.businessName || "",
+                        };
+                        console.log("[DEBUG] Setting selected user:", profileData);
+                        setSelectedUser(profileData as UserProfile);
+                        setShowProfileDialog(true);
+                        console.log("[DEBUG] showProfileDialog should be true now");
+                      };
+                      
                       return (
-                        <TableRow key={vendor.id}>
+                        <TableRow
+                          key={vendor.id}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={(e) => {
+                            console.log("[DEBUG] TableRow onClick triggered", e.target);
+                            // Empêcher l'ouverture si on clique sur les boutons d'action
+                            const target = e.target as HTMLElement;
+                            if (target.tagName === 'BUTTON' || target.closest('button')) {
+                              console.log("[DEBUG] Click on button, ignoring");
+                              return;
+                            }
+                            handleRowClick();
+                          }}
+                        >
                           <TableCell>
-                            <div>
+                            <div className="pointer-events-none">
                               <p className="font-medium">{vendor.businessName || vendor.firstName || "N/A"}</p>
                               <p className="text-xs text-muted-foreground">{vendor.phone || "-"}</p>
                             </div>
@@ -634,7 +683,7 @@ export default function SuperAdmin() {
                           <TableCell>
                             {format(vendor.createdAt, "dd/MM/yyyy", { locale: fr })}
                           </TableCell>
-                          <TableCell className="text-right space-x-1">
+                          <TableCell className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -659,17 +708,6 @@ export default function SuperAdmin() {
                               ) : (
                                 <Ban className="h-4 w-4 text-orange-600" />
                               )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setSelectedUser(vendor);
-                                setShowDeleteDialog(true);
-                              }}
-                              title="Supprimer"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                             <Button
                               size="sm"
@@ -724,7 +762,14 @@ export default function SuperAdmin() {
                   </TableHeader>
                   <TableBody>
                     {filteredOrders.slice(0, 100).map((order) => (
-                      <TableRow key={order.id}>
+                      <TableRow 
+                        key={order.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setShowOrderDialog(true);
+                        }}
+                      >
                         <TableCell>
                           <div>
                             <p className="font-medium">{order.clientName || "Client"}</p>
@@ -781,7 +826,14 @@ export default function SuperAdmin() {
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((userItem) => (
-                      <TableRow key={userItem.id}>
+                      <TableRow 
+                        key={userItem.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          setSelectedUser(userItem);
+                          setShowProfileDialog(true);
+                        }}
+                      >
                         <TableCell>
                           <div>
                             <p className="font-medium">{userItem.businessName || userItem.firstName || "N/A"}</p>
@@ -807,7 +859,7 @@ export default function SuperAdmin() {
                         <TableCell>
                           {format(userItem.createdAt, "dd/MM/yyyy", { locale: fr })}
                         </TableCell>
-                        <TableCell className="text-right space-x-1">
+                        <TableCell className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -935,6 +987,75 @@ export default function SuperAdmin() {
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteEntity}>
                   Supprimer l'entite
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Order Details Dialog */}
+          <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  Commande #{selectedOrder?.id?.slice(0, 8).toUpperCase()}
+                </DialogTitle>
+                <DialogDescription>
+                  Détails de la commande
+                </DialogDescription>
+              </DialogHeader>
+              
+              {selectedOrder && (
+                <div className="space-y-4">
+                  {/* Client Info */}
+                  <div className="space-y-2 p-3 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium">Client</Label>
+                    <p className="text-sm">{selectedOrder.clientName || "N/A"}</p>
+                    <p className="text-xs text-muted-foreground">{selectedOrder.clientPhone}</p>
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="space-y-2 p-3 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium">Produit</Label>
+                    <p className="text-sm">{selectedOrder.productName || "-"}</p>
+                  </div>
+
+                  {/* Amount */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 p-3 bg-muted rounded-lg">
+                      <Label className="text-sm font-medium">Montant</Label>
+                      <p className="text-lg font-semibold">{formatPrice(selectedOrder.totalAmount)}</p>
+                    </div>
+                    <div className="space-y-2 p-3 bg-muted rounded-lg">
+                      <Label className="text-sm font-medium">Commission</Label>
+                      <p className="text-lg font-semibold">{formatPrice(selectedOrder.commission || 0)}</p>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2 p-3 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium">Status</Label>
+                    <div>{getStatusBadge(selectedOrder.status)}</div>
+                  </div>
+
+                  {/* Date */}
+                  <div className="space-y-2 p-3 bg-muted rounded-lg">
+                    <Label className="text-sm font-medium">Date</Label>
+                    <p className="text-sm">{format(selectedOrder.createdAt, "dd/MM/yyyy HH:mm", { locale: fr })}</p>
+                  </div>
+
+                  {/* Payment Method - if available */}
+                  {selectedOrder.paymentMethod && (
+                    <div className="space-y-2 p-3 bg-muted rounded-lg">
+                      <Label className="text-sm font-medium">Methode Paiement</Label>
+                      <p className="text-sm">{selectedOrder.paymentMethod}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowOrderDialog(false)}>
+                  Fermer
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -1582,6 +1703,195 @@ export default function SuperAdmin() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Profile Dialog - MUST be outside Tabs to work properly */}
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Profil: {selectedUser?.displayName || selectedUser?.email || "Utilisateur"}
+            </DialogTitle>
+            <DialogDescription>
+              Affichage et modification des informations
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-4">
+              {/* Business Name - For entities */}
+              <div className="space-y-2">
+                <Label htmlFor="profile-business" className="text-sm">Nom de l'entite</Label>
+                <Input
+                  id="profile-business"
+                  value={selectedUser.businessName || selectedUser.displayName || ""}
+                  onChange={(e) => {
+                    if (selectedUser) {
+                      setSelectedUser({
+                        ...selectedUser,
+                        businessName: e.target.value,
+                        displayName: e.target.value
+                      });
+                    }
+                  }}
+                  placeholder="Nom de l'entite"
+                />
+              </div>
+
+              {/* Email - Read Only */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Email</Label>
+                <div className="p-2 bg-muted rounded text-sm text-muted-foreground">
+                  {selectedUser.email}
+                </div>
+              </div>
+
+              {/* Display Name */}
+              <div className="space-y-2">
+                <Label htmlFor="profile-name" className="text-sm">Nom Complet</Label>
+                <Input
+                  id="profile-name"
+                  value={selectedUser.displayName || ""}
+                  onChange={(e) => {
+                    if (selectedUser) {
+                      setSelectedUser({
+                        ...selectedUser,
+                        displayName: e.target.value
+                      });
+                    }
+                  }}
+                  placeholder="Nom complet"
+                />
+              </div>
+
+              {/* Phone */}
+              <div className="space-y-2">
+                <Label htmlFor="profile-phone" className="text-sm">Téléphone</Label>
+                <Input
+                  id="profile-phone"
+                  value={selectedUser.phone || ""}
+                  onChange={(e) => {
+                    if (selectedUser) {
+                      setSelectedUser({
+                        ...selectedUser,
+                        phone: e.target.value
+                      });
+                    }
+                  }}
+                  placeholder="+221 77 000 0000"
+                />
+              </div>
+
+              {/* Entity ID - If applicable */}
+              {selectedUser.entityId && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">ID Entite</Label>
+                  <div className="p-2 bg-muted rounded text-sm text-muted-foreground">
+                    {selectedUser.entityId}
+                  </div>
+                </div>
+              )}
+
+              {/* Role - If applicable */}
+              {selectedUser.role && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Role</Label>
+                  <div className="p-2 bg-muted rounded text-sm text-muted-foreground">
+                    {selectedUser.role === "vendor" ? "Entite" : selectedUser.role === "admin" ? "Admin" : "Super Admin"}
+                  </div>
+                </div>
+              )}
+
+              {/* Status */}
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <Label className="text-sm font-medium">Actif</Label>
+                  <p className="text-xs text-muted-foreground">Activate/Suspend account</p>
+                </div>
+                <Switch
+                  checked={selectedUser.isActive !== false}
+                  onCheckedChange={(checked) => {
+                    if (selectedUser) {
+                      setSelectedUser({
+                        ...selectedUser,
+                        isActive: checked
+                      });
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProfileDialog(false)}>
+              Fermer
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedUser?.id) {
+                  toast({
+                    title: "Erreur",
+                    description: "Utilisateur non trouvé",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                try {
+                  console.log("[PROFILE] Updating user:", selectedUser.id);
+                  console.log("[PROFILE] Data:", {
+                    displayName: selectedUser.displayName,
+                    phone: selectedUser.phone,
+                    isActive: selectedUser.isActive,
+                  });
+                  
+                  // Update user profile
+                  await updateUserProfile(selectedUser.id, {
+                    displayName: selectedUser.displayName || "",
+                    phone: selectedUser.phone || "",
+                    isActive: selectedUser.isActive !== false,
+                  });
+
+                  console.log("[PROFILE] User profile updated");
+
+                  // If entity, also update vendor config
+                  if (selectedUser.businessName && selectedUser.entityId) {
+                    const config = vendorConfigs.get(selectedUser.id);
+                    console.log("[PROFILE] Vendor config:", config);
+                    if (config) {
+                      await updateVendorConfig(config.id, {
+                        businessName: selectedUser.businessName,
+                      });
+                      console.log("[PROFILE] Vendor config updated");
+                    }
+                  }
+
+                  toast({
+                    title: "Succès",
+                    description: "Profil mis à jour avec succès",
+                  });
+
+                  // Close dialog and reload
+                  setShowProfileDialog(false);
+                  // Reload to get updated data
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 500);
+                } catch (err) {
+                  console.error("[PROFILE] Error updating profile:", err);
+                  toast({
+                    title: "Erreur",
+                    description: `Impossible de mettre à jour le profil: ${(err as Error).message}`,
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
+              Sauvegarder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Entity Dialog */}
       <CreateEntityDialog

@@ -1,7 +1,7 @@
 /**
  * Insurance Module
  * Services métier pour le secteur des assurances
- * 
+ *
  * Fonctionnalités:
  * - Gestion des polices (contrats)
  * - Déclarations de sinistres
@@ -10,11 +10,11 @@
  * - Types d'assurance (auto, habitation, santé, vie)
  */
 
-import { Timestamp, collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs, orderBy, increment } from "firebase/firestore";
-import { db } from "../firebase";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 
 // Types d'assurance
-export type InsuranceType = 
+export type InsuranceType =
   | "auto"
   | "home"
   | "health"
@@ -148,6 +148,8 @@ export interface InsuranceProduct {
  * Service Insurance
  */
 export class InsuranceService {
+  private db = admin.firestore();
+
   /**
    * Générer un numéro de police
    */
@@ -181,7 +183,7 @@ export class InsuranceService {
       status: data.status || "pending",
     };
 
-    const docRef = await addDoc(collection(db, "insurance_policies"), {
+    const docRef = await this.db.collection("insurance_policies").add({
       ...policyData,
       startDate: Timestamp.fromDate(policyData.startDate),
       endDate: Timestamp.fromDate(policyData.endDate),
@@ -200,15 +202,14 @@ export class InsuranceService {
       status: "pending",
       period: {
         start: policyData.startDate,
-        end: data.paymentFrequency === "monthly" 
+        end: data.paymentFrequency === "monthly"
           ? new Date(policyData.startDate.getTime() + 30 * 24 * 60 * 60 * 1000)
           : policyData.endDate,
       },
-      createdAt: new Date(),
     });
 
     // Créer un ticket CRM pour suivi
-    await addDoc(collection(db, "crmTickets"), {
+    await this.db.collection("crmTickets").add({
       vendorId: data.vendorId,
       source: "insurance",
       sourceId: docRef.id,
@@ -240,17 +241,15 @@ export class InsuranceService {
    * Obtenir une police par numéro
    */
   async getPolicyByNumber(policyNumber: string): Promise<InsurancePolicy | null> {
-    const q = query(
-      collection(db, "insurance_policies"),
-      where("policyNumber", "==", policyNumber)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("insurance_policies")
+      .where("policyNumber", "==", policyNumber)
+      .get();
+
     if (snapshot.empty) return null;
 
     const doc = snapshot.docs[0];
     const data = doc.data();
-    
+
     return {
       id: doc.id,
       ...data,
@@ -265,13 +264,11 @@ export class InsuranceService {
    * Obtenir les polices d'un client
    */
   async getClientPolicies(clientId: string, vendorId: string): Promise<InsurancePolicy[]> {
-    const q = query(
-      collection(db, "insurance_policies"),
-      where("clientId", "==", clientId),
-      where("vendorId", "==", vendorId)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("insurance_policies")
+      .where("clientId", "==", clientId)
+      .where("vendorId", "==", vendorId)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -298,7 +295,7 @@ export class InsuranceService {
       status: "reported" as ClaimStatus,
     };
 
-    const docRef = await addDoc(collection(db, "insurance_claims"), {
+    const docRef = await this.db.collection("insurance_claims").add({
       ...claimData,
       incidentDate: Timestamp.fromDate(claimData.incidentDate),
       reportedDate: Timestamp.fromDate(claimData.reportedDate),
@@ -308,17 +305,17 @@ export class InsuranceService {
     });
 
     // Mettre à jour la police
-    const policyRef = doc(db, "insurance_policies", data.policyId);
-    await updateDoc(policyRef, {
+    const policyRef = this.db.doc(`insurance_policies/${data.policyId}`);
+    await policyRef.update({
       metadata: {
-        claimCount: increment(1),
+        claimCount: admin.firestore.FieldValue.increment(1),
         lastClaimDate: now,
       },
       updatedAt: now,
     });
 
     // Créer un ticket CRM prioritaire
-    await addDoc(collection(db, "crmTickets"), {
+    await this.db.collection("crmTickets").add({
       vendorId: data.vendorId,
       source: "insurance_claims",
       sourceId: docRef.id,
@@ -367,19 +364,22 @@ export class InsuranceService {
       notes?: string;
     }
   ): Promise<void> {
-    const claimRef = doc(db, "insurance_claims", claimId);
-    const claimSnap = await getDoc(claimRef);
+    const claimRef = this.db.doc(`insurance_claims/${claimId}`);
+    const claimSnap = await claimRef.get();
 
-    if (!claimSnap.exists()) {
+    if (!claimSnap.exists) {
       throw new Error("Sinistre introuvable");
     }
 
     const claimData = claimSnap.data();
+    if (!claimData) {
+      throw new Error("Données du sinistre introuvables");
+    }
     if (claimData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    await updateDoc(claimRef, {
+    await claimRef.update({
       status: "approved",
       paymentAmount: approvalData.paymentAmount,
       adjusterNotes: approvalData.notes,
@@ -391,19 +391,22 @@ export class InsuranceService {
    * Payer un sinistre
    */
   async payClaim(claimId: string, vendorId: string): Promise<void> {
-    const claimRef = doc(db, "insurance_claims", claimId);
-    const claimSnap = await getDoc(claimRef);
+    const claimRef = this.db.doc(`insurance_claims/${claimId}`);
+    const claimSnap = await claimRef.get();
 
-    if (!claimSnap.exists()) {
+    if (!claimSnap.exists) {
       throw new Error("Sinistre introuvable");
     }
 
     const claimData = claimSnap.data();
+    if (!claimData) {
+      throw new Error("Données du sinistre introuvables");
+    }
     if (claimData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    await updateDoc(claimRef, {
+    await claimRef.update({
       status: "paid",
       paidAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -425,19 +428,22 @@ export class InsuranceService {
     vendorId: string,
     reason: string
   ): Promise<void> {
-    const claimRef = doc(db, "insurance_claims", claimId);
-    const claimSnap = await getDoc(claimRef);
+    const claimRef = this.db.doc(`insurance_claims/${claimId}`);
+    const claimSnap = await claimRef.get();
 
-    if (!claimSnap.exists()) {
+    if (!claimSnap.exists) {
       throw new Error("Sinistre introuvable");
     }
 
     const claimData = claimSnap.data();
+    if (!claimData) {
+      throw new Error("Données du sinistre introuvables");
+    }
     if (claimData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    await updateDoc(claimRef, {
+    await claimRef.update({
       status: "rejected",
       rejectionReason: reason,
       updatedAt: Timestamp.now(),
@@ -457,7 +463,7 @@ export class InsuranceService {
   async createPremium(data: Omit<InsurancePremium, "id" | "createdAt">): Promise<InsurancePremium> {
     const now = Timestamp.now();
 
-    const docRef = await addDoc(collection(db, "insurance_premiums"), {
+    const docRef = await this.db.collection("insurance_premiums").add({
       ...data,
       dueDate: Timestamp.fromDate(data.dueDate),
       paidDate: data.paidDate ? Timestamp.fromDate(data.paidDate) : null,
@@ -482,19 +488,22 @@ export class InsuranceService {
     paymentMethod: string;
     paidDate: Date;
   }): Promise<void> {
-    const premiumRef = doc(db, "insurance_premiums", premiumId);
-    const premiumSnap = await getDoc(premiumRef);
+    const premiumRef = this.db.doc(`insurance_premiums/${premiumId}`);
+    const premiumSnap = await premiumRef.get();
 
-    if (!premiumSnap.exists()) {
+    if (!premiumSnap.exists) {
       throw new Error("Prime introuvable");
     }
 
     const premiumData = premiumSnap.data();
+    if (!premiumData) {
+      throw new Error("Données de la prime introuvables");
+    }
     if (premiumData.vendorId !== vendorId) {
       throw new Error("Non autorisé");
     }
 
-    await updateDoc(premiumRef, {
+    await premiumRef.update({
       status: "paid",
       paidDate: Timestamp.fromDate(paymentData.paidDate),
       paymentMethod: paymentData.paymentMethod,
@@ -503,8 +512,8 @@ export class InsuranceService {
 
     // Si c'est la première prime, activer la police
     if (premiumData.status === "pending") {
-      const policyRef = doc(db, "insurance_policies", premiumData.policyId);
-      await updateDoc(policyRef, {
+      const policyRef = this.db.doc(`insurance_policies/${premiumData.policyId}`);
+      await policyRef.update({
         status: "active",
         updatedAt: Timestamp.now(),
       });
@@ -516,14 +525,12 @@ export class InsuranceService {
    */
   async getOverduePremiums(vendorId: string): Promise<InsurancePremium[]> {
     const now = new Date();
-    const q = query(
-      collection(db, "insurance_premiums"),
-      where("vendorId", "==", vendorId),
-      where("status", "==", "pending"),
-      where("dueDate", "<", Timestamp.fromDate(now))
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("insurance_premiums")
+      .where("vendorId", "==", vendorId)
+      .where("status", "==", "pending")
+      .where("dueDate", "<", Timestamp.fromDate(now))
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -544,7 +551,7 @@ export class InsuranceService {
    * Envoyer une notification
    */
   private async sendNotification(clientPhone: string, data: any): Promise<void> {
-    await addDoc(collection(db, "notifications"), {
+    await this.db.collection("notifications").add({
       type: "insurance",
       recipientPhone: clientPhone,
       ...data,
@@ -557,12 +564,10 @@ export class InsuranceService {
    * Obtenir les produits d'assurance
    */
   async getInsuranceProducts(vendorId: string, activeOnly: boolean = true): Promise<InsuranceProduct[]> {
-    const q = query(
-      collection(db, "insurance_products"),
-      where("vendorId", "==", vendorId)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("insurance_products")
+      .where("vendorId", "==", vendorId)
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -577,17 +582,15 @@ export class InsuranceService {
    * Obtenir un sinistre par numéro
    */
   async getClaimByNumber(claimNumber: string): Promise<InsuranceClaim | null> {
-    const q = query(
-      collection(db, "insurance_claims"),
-      where("claimNumber", "==", claimNumber)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("insurance_claims")
+      .where("claimNumber", "==", claimNumber)
+      .get();
+
     if (snapshot.empty) return null;
 
     const doc = snapshot.docs[0];
     const data = doc.data();
-    
+
     return {
       id: doc.id,
       ...data,
@@ -603,14 +606,12 @@ export class InsuranceService {
    * Obtenir les sinistres d'un client
    */
   async getClientClaims(clientId: string, vendorId: string): Promise<InsuranceClaim[]> {
-    const q = query(
-      collection(db, "insurance_claims"),
-      where("clientId", "==", clientId),
-      where("vendorId", "==", vendorId),
-      orderBy("reportedDate", "desc")
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await this.db.collection("insurance_claims")
+      .where("clientId", "==", clientId)
+      .where("vendorId", "==", vendorId)
+      .orderBy("reportedDate", "desc")
+      .get();
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {

@@ -5,27 +5,13 @@
 
 import { Request, Response } from "express";
 import * as crypto from "crypto";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 import { logger, logWebhookEvent, logPaymentEvent } from "../logger";
 
 // Mock Firestore for local development without Firebase credentials
 // In production, this will be initialized by Firebase Cloud Functions
-const db: any = {
-  doc: (path: string) => ({
-    get: async () => ({ exists: false, data: () => null }),
-    set: async () => {},
-    update: async () => {},
-    delete: async () => {},
-  }),
-  collection: (path: string) => ({
-    add: async () => ({ id: "dummy" }),
-    doc: (id?: string) => ({
-      get: async () => ({ exists: false, data: () => null }),
-      set: async () => {},
-      update: async () => {},
-      delete: async () => {},
-    }),
-  }),
-};
+const db = admin.firestore();
 
 // Types
 type WebhookStatus = "received" | "processing" | "completed" | "failed";
@@ -113,7 +99,7 @@ async function markWebhookAsProcessing(
     reference,
     orderId,
     status: "processing",
-    receivedAt: admin.firestore.Timestamp.now(),
+    receivedAt: Timestamp.now(),
     attempts: 1,
   });
 
@@ -126,7 +112,7 @@ async function markWebhookAsProcessing(
 async function markWebhookAsCompleted(idempotencyKey: string): Promise<void> {
   await db.doc(`webhook_logs/${idempotencyKey}`).update({
     status: "completed",
-    completedAt: admin.firestore.Timestamp.now(),
+    completedAt: Timestamp.now(),
   });
 }
 
@@ -140,7 +126,7 @@ async function markWebhookAsFailed(
   await db.doc(`webhook_logs/${idempotencyKey}`).update({
     status: "failed",
     error,
-    failedAt: admin.firestore.Timestamp.now(),
+    failedAt: Timestamp.now(),
   });
 }
 
@@ -220,8 +206,8 @@ export async function handleWaveWebhook(req: Request, res: Response): Promise<vo
         status: "paid",
         paymentMethod: "wave",
         pspReference: transferId,
-        paidAt: admin.firestore.Timestamp.now(),
-        updatedAt: admin.firestore.Timestamp.now(),
+        paidAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       // Logger l'audit
@@ -232,7 +218,7 @@ export async function handleWaveWebhook(req: Request, res: Response): Promise<vo
         previousStatus,
         newStatus: "paid",
         changedBy: "webhook",
-        createdAt: admin.firestore.Timestamp.now(),
+        createdAt: Timestamp.now(),
       });
 
       // Logger le succès
@@ -254,7 +240,7 @@ export async function handleWaveWebhook(req: Request, res: Response): Promise<vo
       // Paiement échoué ou annulé
       await db.doc(`orders/${externalId}`).update({
         status: "pending",
-        updatedAt: admin.firestore.Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       logWebhookEvent("wave", "payment_failed", externalId, false);
@@ -336,8 +322,8 @@ export async function handleOrangeMoneyWebhook(
         status: "paid",
         paymentMethod: "orange_money",
         pspReference: reference,
-        paidAt: admin.firestore.Timestamp.now(),
-        updatedAt: admin.firestore.Timestamp.now(),
+        paidAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       // Logger l'audit
@@ -348,7 +334,7 @@ export async function handleOrangeMoneyWebhook(
         previousStatus: orderData.status,
         newStatus: "paid",
         changedBy: "webhook",
-        createdAt: admin.firestore.Timestamp.now(),
+        createdAt: Timestamp.now(),
       });
 
       logWebhookEvent("orange_money", "payment_notification", orderId, true);
@@ -479,8 +465,8 @@ export async function handlePayDunyaWebhook(
         status: "paid",
         paymentMethod: "paydunya",
         pspReference: transaction_id,
-        paidAt: admin.firestore.Timestamp.now(),
-        updatedAt: admin.firestore.Timestamp.now(),
+        paidAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       // Logger l'audit
@@ -491,7 +477,7 @@ export async function handlePayDunyaWebhook(
         previousStatus: orderData.status,
         newStatus: "paid",
         changedBy: "webhook",
-        createdAt: admin.firestore.Timestamp.now(),
+        createdAt: Timestamp.now(),
       });
 
       logWebhookEvent("paydunya", "payment_notification", order_id, true);
@@ -510,7 +496,7 @@ export async function handlePayDunyaWebhook(
       // Paiement échoué ou annulé
       await db.doc(`orders/${order_id}`).update({
         status: "pending",
-        updatedAt: admin.firestore.Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       logWebhookEvent("paydunya", "payment_failed", order_id, false, status);

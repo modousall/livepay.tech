@@ -245,7 +245,7 @@ export interface Product {
 export type InsertProduct = Omit<Product, "id" | "createdAt" | "shareCode" | "reservedStock" | "vendorId">;
 
 // ========== ORDER ==========
-export type OrderStatus = "pending" | "reserved" | "paid" | "expired" | "cancelled";
+export type OrderStatus = "pending" | "reserved" | "paid" | "shipped" | "delivered" | "expired" | "cancelled";
 export type PaymentMethod = "wave" | "orange_money" | "card" | "cash" | "mtn_momo" | "moov_money" | "free_money" | "paydunya";
 
 // PayDunya transaction status
@@ -273,6 +273,7 @@ export interface Order {
   quantity: number;
   unitPrice: number;
   totalAmount: number;
+  commission?: number;
 
   // Commande
   status: OrderStatus;

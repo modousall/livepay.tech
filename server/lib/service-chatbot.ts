@@ -1,6 +1,6 @@
 /**
  * Service Chatbot Orienté SERVICES (vs E-commerce)
- * 
+ *
  * Ce service gère les conversations pour les entités de SERVICE :
  * - Banque / Microfinance
  * - Assurance
@@ -9,7 +9,7 @@
  * - Utilities
  * - Transport
  * - Éducation
- * 
+ *
  * PRINCIPES:
  * - 80-95% des demandes sont des INFOS, pas des achats
  * - Chaque secteur a ses codes spécifiques (INFO, SOLDE, POLICE, etc.)
@@ -17,7 +17,8 @@
  * - Gestion des urgences prioritaire
  */
 
-import { Timestamp, collection, addDoc, doc, getDoc, query, where, getDocs } from "firebase/firestore";
+import * as admin from 'firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 
 // Types d'intentions (réorientés service)
@@ -989,8 +990,9 @@ export class ServiceChatbot {
    */
   private async createEmergencyTicket(context: ServiceConversationContext): Promise<string> {
     const ticketId = `URG-${Date.now()}`;
-    
-    await addDoc(collection(db, "crmTickets"), {
+    const db = admin.firestore();
+
+    await db.collection("crmTickets").add({
       vendorId: context.vendorId,
       source: "whatsapp_chatbot",
       sourceId: context.sessionId,
@@ -1010,7 +1012,7 @@ export class ServiceChatbot {
     });
 
     // Notification aux conseillers
-    await addDoc(collection(db, "notifications"), {
+    await db.collection("notifications").add({
       vendorId: context.vendorId,
       type: "emergency_alert",
       title: "🚨 URGENCE CLIENT",
@@ -1028,8 +1030,9 @@ export class ServiceChatbot {
    */
   private async createSupportTicket(context: ServiceConversationContext): Promise<string> {
     const ticketId = `SUP-${Date.now()}`;
-    
-    await addDoc(collection(db, "crmTickets"), {
+    const db = admin.firestore();
+
+    await db.collection("crmTickets").add({
       vendorId: context.vendorId,
       source: "whatsapp_chatbot",
       sourceId: context.sessionId,

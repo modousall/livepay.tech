@@ -35,7 +35,7 @@ interface OnboardingProps {
 
 interface ContextualOnboardingModalProps {
   profileLabel: string;
-  recommendedMode: "simplified" | "expert";
+  // recommendedMode supprimé - mode simplifié par défaut
   selectedMode: "simplified" | "expert";
   onModeChange: (mode: "simplified" | "expert") => void;
   slaPreview: Array<{ moduleLabel: string; targetLabel: string }>;
@@ -168,7 +168,7 @@ export function OnboardingChecklist({ hasProducts, hasPhone, hasLiveMode, onDism
 
 export function ContextualOnboardingModal({
   profileLabel,
-  recommendedMode,
+  // recommendedMode supprimé - mode simplifié par défaut
   selectedMode,
   onModeChange,
   slaPreview,
@@ -207,7 +207,7 @@ export function ContextualOnboardingModal({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Recommande pour ce profil: {recommendedMode === "simplified" ? "Mode simplifie" : "Mode expert"}
+              Mode simplifie recommande pour tous les profils
             </p>
           </div>
 

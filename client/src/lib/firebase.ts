@@ -54,6 +54,7 @@ export interface UserProfile {
   email: string;
   firstName?: string;
   lastName?: string;
+  displayName?: string;
   businessName?: string;
   businessType?: string;
   phone?: string;
@@ -61,6 +62,8 @@ export interface UserProfile {
   entityId?: string;
   entityRole?: "owner" | "admin" | "agent";
   profileImageUrl?: string;
+  isActive?: boolean;
+  suspended?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -193,7 +196,7 @@ export async function registerWithEmail(
     });
 
     // Create default vendor config so super-admin sees new entity as active immediately
-    await addDoc(collection(db, "vendorConfigs"), {
+    await addDoc(collection(db, "vendor_configs"), {
       vendorId: entityId,
       businessName: data.businessName || displayName || "Ma Boutique",
       preferredPaymentMethod: "wave",
@@ -386,7 +389,7 @@ export interface VendorConfig {
 }
 
 export async function getVendorConfig(vendorId: string): Promise<VendorConfig | null> {
-  const q = query(collection(db, "vendorConfigs"), where("vendorId", "==", vendorId));
+  const q = query(collection(db, "vendor_configs"), where("vendorId", "==", vendorId));
   const snap = await getDocs(q);
   if (snap.empty) return null;
   const docData = snap.docs[0];
@@ -413,7 +416,7 @@ export async function getVendorConfig(vendorId: string): Promise<VendorConfig | 
 
 export async function createVendorConfig(config: Omit<VendorConfig, "id" | "createdAt" | "updatedAt">): Promise<VendorConfig> {
   const now = Timestamp.now();
-  const docRef = await addDoc(collection(db, "vendorConfigs"), {
+  const docRef = await addDoc(collection(db, "vendor_configs"), {
     ...config,
     createdAt: now,
     updatedAt: now,
@@ -430,7 +433,7 @@ export async function updateVendorConfig(configId: string, data: Partial<VendorC
   const updateData = { ...data, updatedAt: Timestamp.now() };
   delete (updateData as any).id;
   delete (updateData as any).createdAt;
-  await updateDoc(doc(db, "vendorConfigs", configId), updateData);
+  await updateDoc(doc(db, "vendor_configs", configId), updateData);
 }
 
 // ========== PRODUCTS ==========
@@ -1174,7 +1177,8 @@ export type CrmModule =
   | "banking_microfinance"
   | "insurance"
   | "telecom"
-  | "utilities";
+  | "utilities"
+  | "queue";
 
 export interface CrmAgent {
   id: string;
@@ -1659,7 +1663,7 @@ export async function getPlatformStats(): Promise<{
  * Get vendor config by vendor ID (super admin)
  */
 export async function getVendorConfigById(vendorId: string): Promise<VendorConfig | null> {
-  const configRef = collection(db, "vendorConfigs");
+  const configRef = collection(db, "vendor_configs");
   const q = query(configRef, where("vendorId", "==", vendorId), limit(1));
   const snapshot = await getDocs(q);
   

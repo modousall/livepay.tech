@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { UsersRound, Copy, PlusCircle, ShieldCheck } from "lucide-react";
+import { UsersRound, Copy, PlusCircle, ShieldCheck, UserPlus } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { getEntityMembers, updateUserProfile, type UserProfile } from "@/lib/firebase";
+import { getEntityMembers, updateUserProfile, type UserProfile, registerWithEmail } from "@/lib/firebase";
 
 type EntityRole = NonNullable<UserProfile["entityRole"]>;
 
@@ -22,6 +23,13 @@ export default function EntityMembersPage() {
   const [loading, setLoading] = useState(true);
   const [newMemberId, setNewMemberId] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<EntityRole>("agent");
+  
+  // Creation utilisateur avec Firebase Auth
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserName, setNewUserName] = useState("");
 
   const canManage = useMemo(() => {
     if (!user) return false;
@@ -81,6 +89,48 @@ export default function EntityMembersPage() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!entityId) return;
+    if (!newUserEmail || !newUserPassword) {
+      toast({ title: "Erreur", description: "Email et mot de passe requis.", variant: "destructive" });
+      return;
+    }
+    
+    setCreatingUser(true);
+    try {
+      // Creation utilisateur avec Firebase Auth
+      const newUser = await registerWithEmail(newUserEmail, newUserPassword, {
+        firstName: newUserName.split(" ")[0] || "",
+        lastName: newUserName.split(" ").slice(1).join(" ") || "",
+        entityId,
+      });
+      
+      // Update entity role
+      await updateUserProfile(newUser.id, { entityRole: newMemberRole });
+      
+      toast({ 
+        title: "Utilisateur cree", 
+        description: "L'utilisateur a ete cree et rattache a l'entite." 
+      });
+      
+      // Reset form
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserName("");
+      setShowCreateDialog(false);
+      await loadMembers();
+    } catch (error) {
+      console.error("Create user failed:", error);
+      toast({ 
+        title: "Erreur", 
+        description: (error as Error).message || "Impossible de creer l'utilisateur.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   const handleRoleChange = async (memberId: string, role: EntityRole) => {
     try {
       await updateUserProfile(memberId, { entityRole: role });
@@ -128,7 +178,69 @@ export default function EntityMembersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Rattacher un membre existant</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Membres de l'entite</span>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" variant="outline" disabled={!canManage}>
+                  <UserPlus className="h-4 w-4" />
+                  Creer un utilisateur
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Creer un utilisateur et le rattacher</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newUserName">Nom complet</Label>
+                    <Input
+                      id="newUserName"
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                      placeholder="Jean Dupont"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newUserEmail">Email</Label>
+                    <Input
+                      id="newUserEmail"
+                      type="email"
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                      placeholder="jean@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newUserPassword">Mot de passe</Label>
+                    <Input
+                      id="newUserPassword"
+                      type="password"
+                      value={newUserPassword}
+                      onChange={(e) => setNewUserPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Role entite</Label>
+                    <Select value={newMemberRole} onValueChange={(value: EntityRole) => setNewMemberRole(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="owner">Owner</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="agent">Agent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={handleCreateUser} disabled={creatingUser}>
+                    {creatingUser ? "Creation en cours..." : "Creer et rattacher"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-3 gap-3">
