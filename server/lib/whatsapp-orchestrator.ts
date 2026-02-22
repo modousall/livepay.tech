@@ -160,11 +160,19 @@ export class WhatsAppOrchestrator {
         message
       );
 
-      // 3. Détecter l'intention
-      const intent = await this.detectIntent(message, context);
-
+      // 3. Chercher si le message contient un code produit
+      const productFromKeyword = await this.findProductByKeywordInMessage(message, vendorId);
+      
       // 4. Générer la réponse
-      const response = await this.generateResponse(message, intent, context, vendorId);
+      let response: BotResponse;
+      if (productFromKeyword) {
+        // Si un produit est trouvé par keyword, retourner ses détails
+        response = this.generateProductResponse(productFromKeyword, vendorId);
+      } else {
+        // Sinon, continuer avec la détection d'intention
+        const intent = await this.detectIntent(message, context);
+        response = await this.generateResponse(message, intent, context, vendorId);
+      }
 
       // 5. Envoyer la réponse
       if (response.message) {
@@ -555,6 +563,66 @@ export class WhatsAppOrchestrator {
           intent: "unknown",
         };
     }
+  }
+
+  /**
+   * Chercher un produit basé sur le message (keyword)
+   */
+  private async findProductByKeywordInMessage(
+    message: WhatsAppMessage,
+    vendorId: string
+  ): Promise<any | null> {
+    try {
+      const messageText = message.message?.text?.body?.toUpperCase().trim() || "";
+      if (!messageText) return null;
+
+      const db = admin.firestore();
+      
+      // Chercher tous les produits du vendor
+      const snapshot = await db.collection("products")
+        .where("vendorId", "==", vendorId)
+        .get();
+
+      if (snapshot.empty) return null;
+
+      // Vérifier si le message correspond à un keyword de produit
+      for (const doc of snapshot.docs) {
+        const product = doc.data();
+        if (product.keyword && messageText === product.keyword.toUpperCase()) {
+          return {
+            id: doc.id,
+            ...product,
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error("[WhatsApp] Error finding product by keyword:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Générer une réponse avec les détails du produit
+   */
+  private generateProductResponse(product: any, vendorId: string): BotResponse {
+    const priceStr = product.price ? `${product.price} CFA` : "Prix non disponible";
+    const imageUrl = product.imageUrl ? `\n🖼️ [Image: ${product.imageUrl}]` : "";
+    
+    const message = `✅ *${product.name}*\n\n` +
+      `📝 ${product.description || "Pas de description"}\n\n` +
+      `💰 *Prix:* ${priceStr}\n` +
+      `📦 *Stock:* ${product.stock !== undefined ? product.stock : "Disponible"}` +
+      imageUrl +
+      `\n\n📞 Confirmez votre commande ou contactez-nous pour plus d'infos!`;
+
+    return {
+      message,
+      type: "text",
+      intent: "product_info",
+      nextStep: "confirm_order",
+    };
   }
 
   /**
